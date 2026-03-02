@@ -1,0 +1,57 @@
+{
+    "name": "ssu-dashboard",
+    "version": "0.1.0",
+    "private": true,
+    "scripts": {
+        "dev": "next dev",
+        "build": "next build",
+        "start": "next start",
+        "lint": "eslint",
+        "prepare": "husky"
+    },
+    "lint-staged": {
+        "*.{js,jsx,ts,tsx}": [
+            "prettier --write",
+            "eslint --fix",
+            "eslint"
+        ],
+        "**/*.{json,md,mdx,css,html,yml,yaml,scss}": [
+            "prettier --write"
+        ]
+    },
+    "dependencies": {
+        "@radix-ui/react-avatar": "^1.1.11",
+        "@radix-ui/react-dialog": "^1.1.15",
+        "@radix-ui/react-dropdown-menu": "^2.1.16",
+        "@radix-ui/react-navigation-menu": "^1.2.14",
+        "@radix-ui/react-roving-focus": "^1.1.11",
+        "@radix-ui/react-scroll-area": "^1.2.10",
+        "@radix-ui/react-toast": "^1.2.15",
+        "axios": "^1.13.2",
+        "clsx": "^2.1.1",
+        "lucide-react": "^0.562.0",
+        "next": "16.1.1",
+        "next-themes": "^0.4.6",
+        "react": "19.2.3",
+        "react-daum-postcode": "^3.2.0",
+        "react-dom": "19.2.3",
+        "tailwind-merge": "^3.4.0",
+        "zustand": "^5.0.10"
+    },
+    "devDependencies": {
+        "@commitlint/cli": "^20.3.1",
+        "@commitlint/config-conventional": "^20.3.1",
+        "@tailwindcss/postcss": "^4",
+        "@trivago/prettier-plugin-sort-imports": "^6.0.2",
+        "@types/node": "^20",
+        "@types/react": "^19",
+        "@types/react-dom": "^19",
+        "eslint": "^9",
+        "eslint-config-next": "16.1.1",
+        "husky": "^9.1.7",
+        "lint-staged": "^16.2.7",
+        "prettier": "^3.7.4",
+        "tailwindcss": "^4",
+        "typescript": "^5"
+    }
+}
