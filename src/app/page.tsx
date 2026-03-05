@@ -3,7 +3,6 @@
 import { useEffect } from 'react';
 
 import { useAuthStore } from '@/store/use-auth-store';
-import { useToastStore } from '@/store/use-toast-store';
 
 import { ThemeToggleButton } from '@/components/theme-toggle-button';
 
@@ -17,7 +16,7 @@ export default function Home() {
             if (!appSessionId) return;
 
             try {
-                const res = await usaintService.callUsaintApi({ appSessionId });
+                const res = await usaintService.callTuitionApi({ appSessionId });
                 console.log('u-SAINT API response:', res);
             } catch (error) {
                 console.error('Error fetching u-SAINT data:', error);
