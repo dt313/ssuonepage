@@ -49,6 +49,7 @@ export interface GraduationCategory {
     calculatedValue: string;
     difference: string;
     result: string;
+    subjects: string;
 }
 
 export interface GraduationInfo {
