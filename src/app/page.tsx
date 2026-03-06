@@ -16,7 +16,7 @@ export default function Home() {
             if (!appSessionId) return;
 
             try {
-                const res = await usaintService.callTuitionApi({ appSessionId });
+                const res = await usaintService.callGraduationApi({ appSessionId });
                 console.log('u-SAINT API response:', res);
             } catch (error) {
                 console.error('Error fetching u-SAINT data:', error);

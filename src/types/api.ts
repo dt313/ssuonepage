@@ -32,6 +32,33 @@ export interface TuitionInfo {
     netAmount: string;
 }
 
+export interface TimetableInfo {
+    code: string;
+    name: string;
+    professor: string;
+    time: string;
+    location: string;
+    credit: string;
+    type: string;
+}
+
+export interface GraduationCategory {
+    domain: string;
+    requirement: string;
+    referenceValue: string;
+    calculatedValue: string;
+    difference: string;
+    result: string;
+}
+
+export interface GraduationInfo {
+    graduationCredits: string;
+    recognizedCredits: string;
+    graduationResult: string;
+    graduationAuditDate: string;
+    categories: GraduationCategory[];
+}
+
 export interface UsaintApiResponse<T = Record<string, never>> {
     success: boolean;
     data: T;

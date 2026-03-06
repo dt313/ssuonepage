@@ -7,6 +7,7 @@ import { SapInput, SapWdaClient } from 'usaint-lib';
 export const getControlValue = (wda: SapWdaClient, id: string): string => {
     try {
         const control = wda.getControlById<SapInput>(id);
+        if (!control) return '';
         return control.value?.trim() || '';
     } catch (e) {
         console.error(`Failed to get control with ID ${id}:`, e);
