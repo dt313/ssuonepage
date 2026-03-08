@@ -1,9 +1,13 @@
 import { GraduationInfo, StudentInfo, TimetableInfo, TuitionInfo, UsaintApiRequest, UsaintApiResponse } from '@/types/api';
 import axios, { isAxiosError } from 'axios';
+import { useUsaintStore } from '@/store/use-usaint-store';
 
 export const callStudentInfoApi = async (data: UsaintApiRequest): Promise<UsaintApiResponse<StudentInfo>> => {
     try {
         const response = await axios.post<UsaintApiResponse<StudentInfo>>('/api/usaint/info', data);
+        if (response.data.success) {
+            useUsaintStore.getState().setStudentInfo(response.data.data);
+        }
         return response.data;
     } catch (error) {
         console.error('Error calling u-SAINT API:', error);
@@ -17,6 +21,9 @@ export const callStudentInfoApi = async (data: UsaintApiRequest): Promise<Usaint
 export const callTuitionApi = async (data: UsaintApiRequest): Promise<UsaintApiResponse<TuitionInfo[]>> => {
     try {
         const response = await axios.post<UsaintApiResponse<TuitionInfo[]>>('/api/usaint/tuition', data);
+        if (response.data.success) {
+            useUsaintStore.getState().setTuitionInfo(response.data.data);
+        }
         return response.data;
     } catch (error) {
         console.error('Error calling u-SAINT Tuition API:', error);
@@ -30,6 +37,9 @@ export const callTuitionApi = async (data: UsaintApiRequest): Promise<UsaintApiR
 export const callTimetableApi = async (data: UsaintApiRequest): Promise<UsaintApiResponse<string[][]>> => {
     try {
         const response = await axios.post<UsaintApiResponse<string[][]>>('/api/usaint/timetable', data);
+        if (response.data.success) {
+            useUsaintStore.getState().setTimetableInfo(response.data.data);
+        }
         return response.data;
     } catch (error) {
         console.error('Error calling u-SAINT Timetable API:', error);
@@ -43,6 +53,9 @@ export const callTimetableApi = async (data: UsaintApiRequest): Promise<UsaintAp
 export const callGraduationApi = async (data: UsaintApiRequest): Promise<UsaintApiResponse<GraduationInfo>> => {
     try {
         const response = await axios.post<UsaintApiResponse<GraduationInfo>>('/api/usaint/graduation', data);
+        if (response.data.success) {
+            useUsaintStore.getState().setGraduationInfo(response.data.data);
+        }
         return response.data;
     } catch (error) {
         console.error('Error calling u-SAINT Graduation API:', error);

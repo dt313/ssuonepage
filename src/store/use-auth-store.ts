@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
+import { useUsaintStore } from './use-usaint-store';
 
 interface User {
     id: string;
@@ -25,11 +26,13 @@ export const useAuthStore = create<AuthState>()(
             loginWithUsaint: (appSessionId: string) => {
                 set({ appSessionId, isAuthenticated: true });
             },
-            logout: () =>
+            logout: () => {
                 set({
                     isAuthenticated: false,
                     appSessionId: '',
-                }),
+                });
+                useUsaintStore.getState().clearUsaintData();
+            },
         }),
         {
             name: 'auth-storage',

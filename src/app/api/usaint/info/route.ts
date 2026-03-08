@@ -19,6 +19,7 @@ const CONTROL_IDS = {
     ENGLISH_NAME: 'ZCMW1001.ID_0001:VIW_DEFAULT.RUFNM',
     HANJA_NAME: 'ZCMW1001.ID_0001:VIW_DEFAULT.BIRTHNAME',
     EMAIL: 'ZCMW1001.ID_0001:VIW_DEFAULT.SMTP_ADDR',
+    AVATAR: 'ZCMW1001.ID_0001:VIW_DEFAULT.ST_IMAGE',
 };
 
 export const POST = withErrorHandling(async (request: Request) => {
@@ -52,9 +53,25 @@ export const POST = withErrorHandling(async (request: Request) => {
         );
     }
 
-    // 3️⃣ Extract data using the reusable helper
+    // 3️⃣ Extract data
     const lastName = getControlValue(wda, CONTROL_IDS.LAST_NAME);
     const firstName = getControlValue(wda, CONTROL_IDS.FIRST_NAME);
+
+    // Extract avatar URL from lsdata
+    let avatarUrl = '';
+    const avatarSelector = `img[id="${CONTROL_IDS.AVATAR}"]`;
+    const avatarEl = wda.$(avatarSelector);
+    if (avatarEl.length > 0) {
+        const lsDataStr = avatarEl.attr('lsdata') || '';
+        // lsdata is like "{1:'100px',2:'110px',3:'http\x3a\x2f\x2f...',19:'TOP'}"
+        // We can use a regex to extract the URL in field 3
+        const urlMatch = lsDataStr.match(/3:'([^']+)'/);
+        if (urlMatch && urlMatch[1]) {
+            avatarUrl = urlMatch[1].replace(/\\x([0-9a-fA-F]{2})/g, (_, hex) => 
+                String.fromCharCode(parseInt(hex, 16))
+            );
+        }
+    }
 
     const studentInfo: StudentInfo = {
         studentId: getControlValue(wda, CONTROL_IDS.STUDENT_ID),
@@ -67,6 +84,7 @@ export const POST = withErrorHandling(async (request: Request) => {
         semester: getControlValue(wda, CONTROL_IDS.SEMESTER),
         englishName: getControlValue(wda, CONTROL_IDS.ENGLISH_NAME),
         hanjaName: getControlValue(wda, CONTROL_IDS.HANJA_NAME),
+        avatar: avatarUrl,
     };
 
     // 4️⃣ Return the data

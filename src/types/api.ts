@@ -22,6 +22,7 @@ export interface StudentInfo {
     semester: string;
     englishName: string;
     hanjaName: string;
+    avatar?: string;
 }
 
 export interface TuitionInfo {

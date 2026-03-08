@@ -25,13 +25,13 @@ function ToastItem({ toast }: { toast: ToastItem }) {
     const icons = {
         success: <CheckCircle2 className="h-5 w-5 text-green-500" />,
         error: <AlertCircle className="h-5 w-5 text-red-500" />,
-        info: <Info className="h-5 w-5 text-blue-500" />,
+        info: <Info className="h-5 w-5 text-primary" />,
     };
 
     const variantStyles = {
         success: 'border-green-100 bg-green-50 dark:bg-green-900/10 dark:border-green-900/20',
         error: 'border-red-100 bg-red-50 dark:bg-red-900/10 dark:border-red-900/20',
-        info: 'border-blue-100 bg-blue-50 dark:bg-blue-900/10 dark:border-blue-900/20',
+        info: 'border-primary/20 bg-primary/5 dark:bg-primary/10 dark:border-primary/20',
     };
 
     return (
