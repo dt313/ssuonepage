@@ -5,6 +5,11 @@ import { SapButton, SapComboBox, SapInput, SapTable, SapWdaClient } from 'usaint
 import { withErrorHandling } from '@/utils/api-handler';
 import { getSession } from '@/utils/session';
 
+const CHAPEL_IDS = {
+    INFO: 'ZCMW3681.ID_0001:V_MAIN.TABLE',
+    ATTENDANCE: 'ZCMW3681.ID_0001:V_MAIN.TABLE_A',
+};
+
 export const POST = withErrorHandling(async (request: Request) => {
     const { appSessionId, year: targetYear, semester: targetSemester } = await request.json();
 
@@ -55,128 +60,135 @@ export const POST = withErrorHandling(async (request: Request) => {
     }
 
     // 4️⃣ Get the chapel summary table
-    const tableId = 'ZCMW3681.ID_0001:V_MAIN.TABLE';
+    const tableId = CHAPEL_IDS.INFO;
     const table = wda.getControlById<SapTable>(tableId);
 
     if (!table) {
         console.warn(`Table not found: ${tableId}`);
-        return NextResponse.json<UsaintApiResponse<ChapelInfo[]>>({
+        return NextResponse.json<UsaintApiResponse<ChapelInfo | null>>({
             success: true,
-            data: [],
+            data: null,
         });
     }
 
-    // 5️⃣ Get year and semester info from search conditions using library value property
-    const yearInput = wda.getControlById<SapInput>('ZCMW3681.ID_0001:V_MAIN.TC_SEL_PERYR');
-    const semesterInput = wda.getControlById<SapInput>('ZCMW3681.ID_0001:V_MAIN.TC_SEL_PERID');
+    const infoTableHeaders = await table.getHeaders();
+    const infoTableData = await table.getAllRows();
 
-    const year = yearInput?.value || '';
-    const semester = semesterInput?.value || '';
-
-    // 6️⃣ Fetch all rows from the summary table
-    const tableData = await table.getAllRows();
-
-    // 7️⃣ Get attendance details table
-    const attendanceTableId = 'ZCMW3681.ID_0001:V_MAIN.TABLE_A';
-    const attendanceTable = wda.getControlById<SapTable>(attendanceTableId);
-    let attendanceDetails: any[] = [];
-
-    if (attendanceTable) {
-        const attendanceData = await attendanceTable.getAllRows();
-        attendanceDetails = attendanceData.rows.map((row) => {
-            const getAttendCellText = (headerName: string) => {
-                const idx = attendanceData.headers.findIndex((h) => h.includes(headerName));
-                if (idx === -1) return '';
-
-                const extractFromCell = (cellIdx: number) => {
-                    if (!row.cells[cellIdx]) return '';
-                    const text = (row.cells[cellIdx].text || '').trim();
-                    if (text) return text;
-
-                    const html = row.cells[cellIdx].html;
-                    if (html && html.includes('<input')) {
-                        const valueMatch = html.match(/value="([^"]*)"/);
-                        if (valueMatch) return valueMatch[1].trim();
-                    }
-                    return '';
-                };
-
-                // Standard extraction
-                let val = extractFromCell(idx);
-
-                // Handle common SAP table shift (if current cell is empty but next one has data for specific headers)
-                // Offset happens because of hidden columns or selection columns not mapped to headers correctly
-                if (!val && idx > 1 && ['강의구분', '강사', '소속', '제목', '출결상태'].some((h) => headerName.includes(h))) {
-                    val = extractFromCell(idx + 1);
-                }
-
-                return val;
-            };
-
-            return {
-                section: getAttendCellText('분반'),
-                date: getAttendCellText('수업일자'),
-                type: getAttendCellText('강의구분'),
-                lecturer: getAttendCellText('강사'),
-                department: getAttendCellText('소속'),
-                title: getAttendCellText('제목'),
-                status: getAttendCellText('출결상태'),
-                evaluation: getAttendCellText('평가'),
-                remarks: getAttendCellText('비고'),
-            };
+    const chapelInfo = infoTableData.rows.map((row) => {
+        const cellTexts = row.cells.map((c: any) => c.text.trim());
+        const info: any = {};
+        infoTableHeaders.forEach((header, idx) => {
+            info[header] = cellTexts[idx] || '';
         });
-    }
+        return info;
+    });
 
-    const getCellText = (row: any, headerName: string, headers: string[]) => {
-        const idx = headers.findIndex((h) => h.includes(headerName));
-        if (idx !== -1 && row.cells[idx]) {
-            return (row.cells[idx].text || '').trim();
-        }
-        return '';
+    const year = wda.getControlById<SapComboBox>('ZCMW3681.ID_0001:V_MAIN.TC_SEL_PERYR')?.selectedKey || '';
+    const semester = wda.getControlById<SapComboBox>('ZCMW3681.ID_0001:V_MAIN.TC_SEL_PERID')?.selectedKey || '';
+
+    const attendanceTable = wda.getControlById<SapTable>(CHAPEL_IDS.ATTENDANCE);
+    const attendanceData = await attendanceTable?.getVisibleRows();
+
+    const attendanceDetails = attendanceData?.rows.map((row, i) => {
+        const cells = row.cells;
+
+        console.log(
+            `Row ${i} cells:`,
+            cells.map((c: any) => c.text),
+        );
+
+        return {
+            section: cells[0]?.text ?? '',
+            date: cells[1]?.text ?? '',
+            type: cells[2]?.text ?? '',
+            lecturer: cells[4]?.text ?? '',
+            department: cells[5]?.text ?? '',
+            title: cells[6]?.text ?? '',
+            status: cells[7]?.text ?? '',
+            remarks: cells[10]?.text ?? '',
+        };
+    });
+
+    const result: ChapelInfo = {
+        year,
+        semester,
+        section: chapelInfo[0]?.['분반'] || '',
+        subjectName: '채플',
+        timetable: chapelInfo[0]?.['시간표'] || '',
+        location: chapelInfo[0]?.['강의실'] || '',
+        floor: chapelInfo[0]?.['층수'] || '',
+        seatNumber: chapelInfo[0]?.['좌석번호'] || '',
+        absentAttendance: chapelInfo[0]?.['결석일수'] || '',
+        result: chapelInfo[0]?.['성적'] || '',
+        remarks: chapelInfo[0]?.['비고'] || '',
+        totalAttendance: attendanceDetails ? attendanceDetails.length.toString() : '0',
+        attendedAttendance: attendanceDetails
+            ? attendanceDetails.filter((a) => a.status === '출석').length.toString()
+            : '0',
+        attendanceDetails: attendanceDetails || [],
     };
 
-    const chapelList: ChapelInfo[] = tableData.rows
-        .map((row) => {
-            const timeRoom = getCellText(row, '시간표', tableData.headers);
-            const section = getCellText(row, '분반', tableData.headers);
+    // // 5️⃣ Get year and semester info from search conditions
+    // const yearInput = wda.getControlById<SapInput>('ZCMW3681.ID_0001:V_MAIN.TC_SEL_PERYR');
+    // const semesterInput = wda.getControlById<SapInput>('ZCMW3681.ID_0001:V_MAIN.TC_SEL_PERID');
 
-            // Extract professor from something like "수 13:30-14:20 (08110-반광준)"
-            const profMatch = timeRoom.match(/\(([^)]+)\)/);
-            let professor = '';
-            if (profMatch && profMatch[1]) {
-                const parts = profMatch[1].split('-');
-                professor = parts[parts.length - 1] || profMatch[1];
-            }
+    // const year = yearInput?.value || '';
+    // const semester = semesterInput?.value || '';
 
-            // Filter attendance details for this specific section
-            const filteredAttendance = attendanceDetails.filter((detail) => detail.section === section);
+    // console.log(`Detected year: ${year}, semester: ${semester}`);
 
-            const attendedCount = filteredAttendance.filter((a) => a.status === '출석').length;
-            const absentCount = filteredAttendance.filter((a) => a.status === '결석').length;
-            const totalCount = filteredAttendance.length;
+    // // 6️⃣ Fetch summary table data and detect offset
+    // const totalCols = await table.getTotalColumnCount();
+    // const tableData = await table.getAllRows();
+    // const tableOffset = totalCols - tableData.headers.length;
 
-            return {
-                year,
-                semester,
-                subjectName: '채플',
-                section,
-                professor: professor,
-                timetable: timeRoom,
-                location: getCellText(row, '강의실', tableData.headers),
-                floor: getCellText(row, '층수', tableData.headers),
-                seatNumber: getCellText(row, '좌석번호', tableData.headers),
-                totalAttendance: totalCount.toString(),
-                attendedAttendance: attendedCount.toString(),
-                absentAttendance: getCellText(row, '결석일수', tableData.headers) || absentCount.toString(),
-                result: getCellText(row, '성적', tableData.headers) || '진행중',
-                remarks: getCellText(row, '비고', tableData.headers),
-                attendanceDetails: filteredAttendance,
-            };
-        })
-        .filter((item) => item.section !== '');
+    // const getSummaryCellText = (row: any, headerName: string) => {
+    //     const idx = tableData.headers.findIndex((h) => h.includes(headerName));
+    //     if (idx === -1) return '';
+
+    //     // Use offset if header index doesn't match cell count
+    //     const cell = row.cells[idx] || row.cells[idx + tableOffset];
+    //     return (cell?.text || '').trim();
+    // };
+
+    // // 7️⃣ Get attendance details table data and detect offset
+    // const attendanceTableId = 'ZCMW3681.ID_0001:V_MAIN.TABLE_A';
+    // const attendanceTable = wda.getControlById<SapTable>(attendanceTableId);
+    // let attendanceDetails: any[] = [];
+
+    // const chapelList: ChapelInfo[] = tableData.rows
+    //     .map((row) => {
+    //         const timeRoom = getSummaryCellText(row, '시간표');
+    //         const section = getSummaryCellText(row, '분반');
+
+    //         // Filter attendance details for this specific section
+    //         const filteredAttendance = attendanceDetails.filter((detail) => detail.section === section);
+
+    //         const attendedCount = filteredAttendance.filter((a) => a.status === '출석').length;
+    //         const absentCount = filteredAttendance.filter((a) => a.status === '결석').length;
+    //         const totalCount = filteredAttendance.length;
+
+    //         return {
+    //             year,
+    //             semester,
+    //             subjectName: '채플',
+    //             section,
+    //             timetable: timeRoom,
+    //             location: getSummaryCellText(row, '강의실'),
+    //             floor: getSummaryCellText(row, '층수'),
+    //             seatNumber: getSummaryCellText(row, '좌석번호'),
+    //             totalAttendance: totalCount.toString(),
+    //             attendedAttendance: attendedCount.toString(),
+    //             absentAttendance: getSummaryCellText(row, '결석일수') || absentCount.toString(),
+    //             result: getSummaryCellText(row, '성적') || '진행중',
+    //             remarks: getSummaryCellText(row, '비고'),
+    //             attendanceDetails: filteredAttendance,
+    //         };
+    //     })
+    //     .filter((item) => item.section !== '');
 
     return NextResponse.json<UsaintApiResponse<ChapelInfo | null>>({
         success: true,
-        data: chapelList[0] || null,
+        data: result ?? null,
     });
 });

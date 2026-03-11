@@ -79,7 +79,6 @@ export interface ChapelInfo {
     semester: string;
     subjectName: string;
     section: string;
-    professor: string;
     timetable: string;
     location: string;
     floor: string;
