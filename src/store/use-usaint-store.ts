@@ -1,16 +1,18 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
-import { ChapelInfo, GraduationInfo, StudentInfo, TuitionInfo } from '@/types/api';
+import { ChapelInfo, GraduationInfo, StudentInfo, TuitionInfo, TuitionNotice } from '@/types/api';
 
 interface UsaintState {
     studentInfo: StudentInfo | null;
     tuitionInfo: TuitionInfo[] | null;
+    tuitionNotice: TuitionNotice | null;
     timetableInfo: string[][] | null;
     graduationInfo: GraduationInfo | null;
     chapelInfo: ChapelInfo | null;
     
     setStudentInfo: (info: StudentInfo | null) => void;
     setTuitionInfo: (info: TuitionInfo[] | null) => void;
+    setTuitionNotice: (info: TuitionNotice | null) => void;
     setTimetableInfo: (info: string[][] | null) => void;
     setGraduationInfo: (info: GraduationInfo | null) => void;
     setChapelInfo: (info: ChapelInfo | null) => void;
@@ -23,12 +25,14 @@ export const useUsaintStore = create<UsaintState>()(
         (set) => ({
             studentInfo: null,
             tuitionInfo: null,
+            tuitionNotice: null,
             timetableInfo: null,
             graduationInfo: null,
             chapelInfo: null,
 
             setStudentInfo: (studentInfo) => set({ studentInfo }),
             setTuitionInfo: (tuitionInfo) => set({ tuitionInfo }),
+            setTuitionNotice: (tuitionNotice) => set({ tuitionNotice }),
             setTimetableInfo: (timetableInfo) => set({ timetableInfo }),
             setGraduationInfo: (graduationInfo) => set({ graduationInfo }),
             setChapelInfo: (chapelInfo) => set({ chapelInfo }),
@@ -36,6 +40,7 @@ export const useUsaintStore = create<UsaintState>()(
             clearUsaintData: () => set({
                 studentInfo: null,
                 tuitionInfo: null,
+                tuitionNotice: null,
                 timetableInfo: null,
                 graduationInfo: null,
                 chapelInfo: null,

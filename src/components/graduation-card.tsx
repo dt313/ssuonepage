@@ -3,7 +3,7 @@
 import { useState } from 'react';
 
 import { GraduationInfo } from '@/types/api';
-import { BookOpen, Search, X } from 'lucide-react';
+import { BookOpen, GraduationCap, Search, X } from 'lucide-react';
 
 import { cn } from '@/utils';
 
@@ -17,7 +17,7 @@ interface GraduationCardProps {
 type FilterStatus = 'all' | 'satisfied' | 'insufficient';
 
 export function GraduationCard({ data, className }: GraduationCardProps) {
-    const { graduationCredits, recognizedCredits, graduationResult, graduationAuditDate, categories } = data;
+    const { graduationCredits, recognizedCredits, graduationResult, categories } = data;
     const [filter, setFilter] = useState<FilterStatus>('all');
 
     const filteredCategories = categories.filter((cat) => {
@@ -37,49 +37,56 @@ export function GraduationCard({ data, className }: GraduationCardProps) {
     return (
         <div
             className={cn(
-                'w-full overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm transition-all hover:shadow-md dark:border-zinc-800 dark:bg-zinc-950',
+                'flex h-full w-full flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm transition-all hover:shadow-md dark:border-zinc-800 dark:bg-zinc-950',
                 className,
             )}
         >
-            <div className="border-b border-zinc-200 p-6 dark:border-zinc-800">
-                <div className="flex items-center justify-between">
+            <div className="flex flex-col border-b border-zinc-100 p-5 dark:border-zinc-900/50 sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="flex items-center gap-2.5">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/5 text-primary dark:bg-primary/10">
+                        <GraduationCap className="h-5 w-5" />
+                    </div>
                     <div>
-                        <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-50">Graduation Audit</h3>
-                        <p className="text-xs text-zinc-500">Last updated: {graduationAuditDate}</p>
+                        <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-50">Graduation Audit</h3>
+                        <p className="text-sm text-zinc-500 dark:text-zinc-400">Requirements & credits</p>
                     </div>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-4 p-6 sm:grid-cols-3">
-                <div className="rounded-xl bg-zinc-50 p-4 dark:bg-zinc-900">
-                    <p className="text-xs font-medium text-zinc-500 uppercase">Requirement</p>
-                    <p className="mt-1 text-lg font-bold text-zinc-900 dark:text-zinc-50">{graduationCredits}</p>
+            <div className="grid grid-cols-1 gap-4 p-6 sm:grid-cols-3 bg-zinc-50/30 dark:bg-zinc-900/10 border-b border-zinc-100 dark:border-zinc-900">
+                <div className="rounded-xl bg-white p-4 border border-zinc-100 dark:bg-zinc-950 dark:border-zinc-800 shadow-sm transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-900">
+                    <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Requirement</p>
+                    <p className="mt-1 text-xl font-black text-zinc-900 dark:text-zinc-50 tabular-nums">
+                        {graduationCredits}
+                    </p>
                 </div>
-                <div className="rounded-xl bg-zinc-50 p-4 dark:bg-zinc-900">
-                    <p className="text-xs font-medium text-zinc-500 uppercase">Recognized</p>
-                    <p className="mt-1 text-lg font-bold text-zinc-900 dark:text-zinc-50">{recognizedCredits}</p>
+                <div className="rounded-xl bg-white p-4 border border-zinc-100 dark:bg-zinc-950 dark:border-zinc-800 shadow-sm transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-900">
+                    <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Recognized</p>
+                    <p className="mt-1 text-xl font-black text-zinc-900 dark:text-zinc-50 tabular-nums">
+                        {recognizedCredits}
+                    </p>
                 </div>
-                <div className="rounded-xl bg-primary/10 p-4 dark:bg-primary/20">
-                    <p className="text-xs font-medium text-primary uppercase">Result</p>
-                    <p className="mt-1 text-lg font-bold text-primary">{graduationResult}</p>
+                <div className="rounded-xl bg-primary/5 p-4 border border-primary/10 transition-colors hover:bg-primary/10 dark:hover:bg-primary/20 shadow-sm">
+                    <p className="text-[10px] font-black text-primary uppercase tracking-widest">Result</p>
+                    <p className="mt-1 text-xl font-black text-primary">{graduationResult}</p>
                 </div>
             </div>
 
-            <div className="overflow-x-auto px-6 pb-6 pt-2">
+            <div className="flex-1 overflow-x-auto p-6">
                 <table className="w-full text-left text-sm">
                     <thead>
-                        <tr className="border-b border-zinc-100 dark:border-zinc-900 text-xs text-zinc-500 uppercase">
-                            <th className="pb-3 font-semibold">Domain</th>
-                            <th className="pb-3 font-semibold">Requirement</th>
-                            <th className="pb-3 font-semibold text-center">Req.</th>
-                            <th className="pb-3 font-semibold text-center">Earned</th>
-                            <th className="pb-3 text-right font-semibold min-w-[140px]">
+                        <tr className="border-b border-zinc-100 dark:border-zinc-900 text-[10px] font-black uppercase text-zinc-400 tracking-widest">
+                            <th className="pb-3 pr-2">Domain</th>
+                            <th className="pb-3 px-2">Requirement</th>
+                            <th className="pb-3 px-2 text-center">Req.</th>
+                            <th className="pb-3 px-2 text-center">Earned</th>
+                            <th className="pb-3 pl-2 text-right">
                                 <div className="flex items-center justify-end gap-2">
                                     <span>Result</span>
                                     <select
                                         value={filter}
                                         onChange={(e) => setFilter(e.target.value as FilterStatus)}
-                                        className="rounded-lg border border-zinc-200 bg-zinc-50 px-2 py-1 text-[10px] font-black outline-none transition-all hover:bg-white focus:ring-1 focus:ring-primary dark:border-zinc-800 dark:bg-zinc-900/50 dark:text-zinc-400 dark:hover:bg-zinc-900"
+                                        className="rounded-lg border border-zinc-200 bg-zinc-50 px-2 py-1 text-[10px] font-black outline-none transition-all hover:bg-white focus:ring-1 focus:ring-primary dark:border-zinc-800 dark:bg-zinc-900/50 dark:text-zinc-400 dark:hover:bg-zinc-900 cursor-pointer"
                                     >
                                         <option value="all">전체</option>
                                         <option value="satisfied">충족</option>
@@ -114,13 +121,13 @@ export function GraduationCard({ data, className }: GraduationCardProps) {
                                     </td>
                                     <td className="py-3 pr-2">
                                         <div className="flex items-center gap-2">
-                                            <span className="font-medium text-zinc-900 dark:text-zinc-50">
+                                            <span className="font-bold text-zinc-900 dark:text-zinc-50 text-xs">
                                                 {cat.requirement}
                                             </span>
                                             {hasSubjects && (
                                                 <DialogWrapper
                                                     trigger={
-                                                        <button className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-md hover:bg-white dark:hover:bg-zinc-800 text-zinc-400 hover:text-primary dark:hover:text-primary shadow-sm border border-transparent hover:border-zinc-200 dark:hover:border-zinc-700">
+                                                        <button className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-md hover:bg-white dark:hover:bg-zinc-800 text-zinc-400 hover:text-primary dark:hover:text-primary shadow-sm border border-transparent hover:border-zinc-200 dark:hover:border-zinc-700 cursor-pointer">
                                                             <Search className="h-3 w-3" />
                                                         </button>
                                                     }
@@ -136,7 +143,7 @@ export function GraduationCard({ data, className }: GraduationCardProps) {
                                                                 </DialogDescription>
                                                             </div>
                                                             <DialogClose asChild>
-                                                                <button className="rounded-full p-1 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-50">
+                                                                <button className="rounded-full p-1 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-50 cursor-pointer">
                                                                     <X className="h-5 w-5" />
                                                                 </button>
                                                             </DialogClose>
@@ -151,7 +158,7 @@ export function GraduationCard({ data, className }: GraduationCardProps) {
                                                                         <div className="h-8 w-8 shrink-0 flex items-center justify-center rounded-lg bg-white dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700">
                                                                             <BookOpen className="h-4 w-4 text-primary" />
                                                                         </div>
-                                                                        <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                                                                        <span className="text-sm font-bold text-zinc-700 dark:text-zinc-300">
                                                                             {subject.trim()}
                                                                         </span>
                                                                     </div>
@@ -163,16 +170,16 @@ export function GraduationCard({ data, className }: GraduationCardProps) {
                                             )}
                                         </div>
                                     </td>
-                                    <td className="py-3 text-zinc-600 dark:text-zinc-400 text-center font-medium">
+                                    <td className="py-3 px-2 text-zinc-600 dark:text-zinc-400 text-center font-bold text-xs tabular-nums">
                                         {cat.referenceValue}
                                     </td>
-                                    <td className="py-3 text-zinc-600 dark:text-zinc-400 text-center font-medium">
+                                    <td className="py-3 px-2 text-zinc-600 dark:text-zinc-400 text-center font-bold text-xs tabular-nums">
                                         {cat.calculatedValue}
                                     </td>
-                                    <td className="py-3 text-right">
+                                    <td className="py-3 pl-2 text-right">
                                         <span
                                             className={cn(
-                                                'inline-flex rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wider',
+                                                'inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider',
                                                 isSatisfied
                                                     ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
                                                     : isInsufficient
@@ -190,7 +197,9 @@ export function GraduationCard({ data, className }: GraduationCardProps) {
                 </table>
                 {filteredCategories.length === 0 && (
                     <div className="py-12 text-center">
-                        <p className="text-sm text-zinc-500 dark:text-zinc-400">해당하는 항목이 없습니다.</p>
+                        <p className="text-sm text-zinc-500 dark:text-zinc-400 font-bold uppercase tracking-widest">
+                            해당하는 항목이 없습니다.
+                        </p>
                     </div>
                 )}
             </div>

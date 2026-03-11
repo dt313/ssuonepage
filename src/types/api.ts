@@ -34,6 +34,16 @@ export interface TuitionInfo {
     netAmount: string;
 }
 
+export interface TuitionNotice {
+    mandatory: string[];
+    optional: string[];
+    bankTime: string;
+    additionalTime: string;
+    bankBrand: string;
+    bankNumber: string;
+    bankAccountName: string;
+}
+
 export interface TimetableInfo {
     code: string;
     name: string;

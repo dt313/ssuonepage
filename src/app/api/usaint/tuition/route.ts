@@ -53,8 +53,6 @@ export const POST = withErrorHandling(async (request: Request) => {
     // 4️⃣ Fetch all rows from the table
     const tableData = await table.getAllRows();
 
-    // Debug logging to identify header/cell mismatch
-    console.log('Tuition Table Headers:', tableData.headers);
     if (tableData.rows.length > 0) {
         console.log(`First row cells count: ${tableData.rows[0].cells.length}`);
     }

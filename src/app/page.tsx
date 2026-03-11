@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 
 import { useAuthStore } from '@/store/use-auth-store';
 import { useUsaintStore } from '@/store/use-usaint-store';
+import { useToastStore } from '@/store/use-toast-store';
 
 import { ChapelCard } from '@/components/chapel-card';
 import { GraduationCard } from '@/components/graduation-card';
@@ -14,42 +15,71 @@ import { TuitionCard } from '@/components/tuition-card';
 import { Loader } from '@/components/ui/loader';
 
 import { usaintService } from '@/services';
+import { getErrorMessage } from '@/utils/get-error-message';
 
 export default function Home() {
     const { appSessionId, isAuthenticated, logout } = useAuthStore();
-    const { studentInfo, tuitionInfo, timetableInfo, graduationInfo, chapelInfo } = useUsaintStore();
+    const { studentInfo, tuitionInfo, tuitionNotice, timetableInfo, graduationInfo, chapelInfo } = useUsaintStore();
     const [isLoading, setIsLoading] = useState(false);
+    const showToast = useToastStore((s) => s.show);
 
     useEffect(() => {
         const fetchUsaintData = async () => {
             if (!appSessionId || !isAuthenticated) return;
 
             // If we don't have any data yet, show the loader
-            if (!studentInfo && !tuitionInfo && !timetableInfo && !graduationInfo && !chapelInfo) {
+            if (!studentInfo && !tuitionInfo && !tuitionNotice && !timetableInfo && !graduationInfo && !chapelInfo) {
                 setIsLoading(true);
             }
 
             try {
                 // Fetch all data in parallel
-                await Promise.allSettled([
+                const results = await Promise.allSettled([
                     usaintService.callStudentInfoApi({ appSessionId }),
                     usaintService.callTuitionApi({ appSessionId }),
+                    usaintService.callTuitionNoticeApi({ appSessionId }),
                     usaintService.callTimetableApi({ appSessionId }),
                     usaintService.callGraduationApi({ appSessionId }),
                     usaintService.callChapelApi({ appSessionId }),
                 ]);
+
+                // Check for failures and show toasts
+                results.forEach((result, index) => {
+                    if (result.status === 'rejected') {
+                        const error = result.reason;
+                        const apiNames = [
+                            'Student Info',
+                            'Tuition History',
+                            'Tuition Notice',
+                            'Timetable',
+                            'Graduation Audit',
+                            'Chapel Attendance',
+                        ];
+                        
+                        console.error(`Error fetching ${apiNames[index]}:`, error);
+                        
+                        if (error?.error === 'Session expired or invalid. Please login again.') {
+                            logout();
+                            return;
+                        }
+
+                        // Only show toast for critical failures or if we have no cached data
+                        showToast({
+                            title: `${apiNames[index]} Failed`,
+                            message: getErrorMessage(error, `Failed to fetch ${apiNames[index]}`),
+                            type: 'error',
+                        });
+                    }
+                });
             } catch (error: any) {
                 console.error('Error fetching data:', error);
-                if (error.error === 'Session expired or invalid. Please login again.') {
-                    logout();
-                }
             } finally {
                 setIsLoading(false);
             }
         };
 
         fetchUsaintData();
-    }, [appSessionId, isAuthenticated, logout]);
+    }, [appSessionId, isAuthenticated, logout, showToast]);
 
     return (
         <div className="relative min-h-screen w-full bg-gray-50 dark:bg-zinc-900 transition-colors duration-300">
@@ -138,17 +168,21 @@ export default function Home() {
                                             <ChapelCard data={chapelInfo} studentId={studentInfo?.studentId} />
                                         </div>
                                         {/* Right Column (Graduation Audit): Takes 3/5 width */}
-                                        <div className="flex-1 min-w-150">
+                                        <div className="flex-1 lg:min-w-150">
                                             <TimetableCard data={timetableInfo} className="h-full" />
                                         </div>
                                     </div>
 
                                     <div className="flex gap-6 flex-col lg:flex-row lg:grid-cols-6 ">
-                                        <div className={'flex-1 min-w-150'}>
-                                            {graduationInfo && <GraduationCard data={graduationInfo} />}
+                                        <div className={'flex-1 lg:min-w-150'}>
+                                            {graduationInfo && (
+                                                <GraduationCard data={graduationInfo} timetableData={timetableInfo} />
+                                            )}
                                         </div>
-                                        <div className="gap-6 w-full flex-1">
-                                            {tuitionInfo && <TuitionCard data={tuitionInfo} />}
+                                        <div className="gap-6 w-full flex-1 flex flex-col">
+                                            {tuitionInfo && (
+                                                <TuitionCard data={tuitionInfo} noticeData={tuitionNotice ?? undefined} />
+                                            )}
                                         </div>
                                     </div>
                                 </div>

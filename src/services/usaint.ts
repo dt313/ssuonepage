@@ -5,6 +5,7 @@ import {
     StudentInfo,
     TimetableInfo,
     TuitionInfo,
+    TuitionNotice,
     UsaintApiRequest,
     UsaintApiResponse,
 } from '@/types/api';
@@ -35,6 +36,22 @@ export const callTuitionApi = async (data: UsaintApiRequest): Promise<UsaintApiR
         return response.data;
     } catch (error) {
         console.error('Error calling u-SAINT Tuition API:', error);
+        if (isAxiosError(error)) {
+            throw error.response?.data || error;
+        }
+        throw error;
+    }
+};
+
+export const callTuitionNoticeApi = async (data: UsaintApiRequest): Promise<UsaintApiResponse<TuitionNotice>> => {
+    try {
+        const response = await axios.post<UsaintApiResponse<TuitionNotice>>('/api/usaint/tuition-notice', data);
+        if (response.data.success) {
+            useUsaintStore.getState().setTuitionNotice(response.data.data);
+        }
+        return response.data;
+    } catch (error) {
+        console.error('Error calling u-SAINT Tuition Notice API:', error);
         if (isAxiosError(error)) {
             throw error.response?.data || error;
         }
