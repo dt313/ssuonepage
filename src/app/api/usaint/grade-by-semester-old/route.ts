@@ -40,9 +40,6 @@ export const POST = withErrorHandling(async (request: Request) => {
         );
     }
 
-    const fs = require('fs');
-    fs.writeFileSync('grade-by-semester-old.html', wda.$.html());
-
     // Extract table data
     const table = wda.getControlById<SapTable>(OLD_GRADE_IDS.TABLE);
     let grades: SemesterGrade[] = [];

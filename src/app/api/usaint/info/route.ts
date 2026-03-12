@@ -54,10 +54,6 @@ export const POST = withErrorHandling(async (request: Request) => {
         );
     }
 
-    // // write html to file for debugging
-    const fs = require('fs');
-    fs.writeFileSync('student-info.html', wda.$.html());
-
     // 3️⃣ Extract data
     const lastName = getControlValue(wda, CONTROL_IDS.LAST_NAME);
     const firstName = getControlValue(wda, CONTROL_IDS.FIRST_NAME);
