@@ -52,7 +52,7 @@ export function StudentInfoCard({ data, className }: StudentInfoProps) {
                     </div>
                     <div>
                         <h3 className="text-lg font-black text-zinc-900 dark:text-zinc-50 tracking-tight">학생 정보</h3>
-                        <p className="text-[11px] text-zinc-400 uppercase tracking-wider">학생의 개인 정보</p>
+                        <p className="text-sm text-zinc-400 uppercase tracking-wider">학생의 개인 정보</p>
                     </div>
                 </div>
                 <Button variant="ghost" size="icon" onClick={handleCopy} className="h-8 w-8">

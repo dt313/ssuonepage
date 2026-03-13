@@ -5,18 +5,16 @@ import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/store/use-auth-store';
 import { useToastStore } from '@/store/use-toast-store';
 import { useUsaintStore } from '@/store/use-usaint-store';
-import { LogOut } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
+import { AppLayout } from '@/components/app-layout';
 import { CategoryGradeCard } from '@/components/category-grade-card';
 import { ChapelCard } from '@/components/chapel-card';
 import { DashboardSkeleton } from '@/components/dashboard-skeleton';
 import { GraduationCard } from '@/components/graduation-card';
-import { LoginButton } from '@/components/login-button';
 import { ScholarshipCard } from '@/components/scholarship-card';
 import { SemesterGradeCard } from '@/components/semester-grade-card';
 import { StudentInfoCard } from '@/components/student-info';
-import { ThemeToggleButton } from '@/components/theme-toggle-button';
 import { TimetableCard } from '@/components/timetable-card';
 import { TuitionCard } from '@/components/tuition-card';
 
@@ -122,143 +120,63 @@ export default function Home() {
     }, [appSessionId, isAuthenticated, logout, showToast]);
 
     return (
-        <div className="relative min-h-screen w-full bg-gray-50 dark:bg-zinc-900 transition-colors duration-300">
-            {/* Dashed Grid Background */}
-            <div
-                className="absolute inset-0 z-0 pointer-events-none opacity-50 dark:opacity-20"
-                style={{
-                    backgroundImage: `
-                        linear-gradient(to right, #e7e5e4 1px, transparent 1px),
-                        linear-gradient(to bottom, #e7e5e4 1px, transparent 1px)
-                    `,
-                    backgroundSize: '20px 20px',
-                    backgroundPosition: '0 0, 0 0',
-                    maskImage: `
-                        repeating-linear-gradient(
-                            to right,
-                            black 0px,
-                            black 3px,
-                            transparent 3px,
-                            transparent 8px
-                        ),
-                        repeating-linear-gradient(
-                            to bottom,
-                            black 0px,
-                            black 3px,
-                            transparent 3px,
-                            transparent 8px
-                        )
-                    `,
-                    WebkitMaskImage: `
-                        repeating-linear-gradient(
-                            to right,
-                            black 0px,
-                            black 3px,
-                            transparent 3px,
-                            transparent 8px
-                        ),
-                        repeating-linear-gradient(
-                            to bottom,
-                            black 0px,
-                            black 3px,
-                            transparent 3px,
-                            transparent 8px
-                        )
-                    `,
-                    maskComposite: 'intersect',
-                    WebkitMaskComposite: 'source-in',
-                }}
-            />
-
-            <div className="relative z-10 flex flex-col items-center gap-8 p-4 pt-12 pb-24">
-                <div className="fixed top-4 right-4 flex gap-2 z-50">
-                    {isAuthenticated ? (
-                        <button
-                            onClick={() => logout()}
-                            className="flex h-9 w-9 items-center justify-center rounded-full border border-border transition-colors hover:bg-accent"
-                            aria-label="Logout"
-                        >
-                            <LogOut className="h-4 w-4" />
-                        </button>
-                    ) : (
-                        <LoginButton />
-                    )}
-                    <ThemeToggleButton />
-                </div>
-
-                <div className="w-full max-w-[1400px] flex flex-col gap-8">
-                    <header className="flex flex-col gap-2">
-                        <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
-                            SSU Dashboard
-                        </h1>
-                        <p className="text-zinc-500 dark:text-zinc-400">
-                            Manage your academic information in one place.
-                        </p>
-                    </header>
-
-                    <main className="w-full">
-                        {!isHydrated ? (
-                            <DashboardSkeleton />
-                        ) : isAuthenticated ? (
-                            isLoading ? (
-                                <DashboardSkeleton />
-                            ) : (
-                                <div className="flex flex-col gap-6">
-                                    {/* Left Column (Student Info + Tuition): Takes 2/5 width */}
-                                    <div className="flex gap-6  flex-col lg:flex-row">
-                                        <div className="flex flex-col gap-6 lg:max-w-100">
-                                            {studentInfo && <StudentInfoCard data={studentInfo} />}
-                                            <ChapelCard data={chapelInfo} studentId={studentInfo?.studentId} />
-                                        </div>
-                                        {/* Right Column (Graduation Audit): Takes 3/5 width */}
-                                        <div className="flex-1 lg:min-w-150">
-                                            <TimetableCard data={timetableInfo} className="h-full" />
-                                        </div>
-                                    </div>
-
-                                    <div className="flex gap-6 flex-col lg:flex-row">
-                                        <div className={'flex-1 lg:min-w-150'}>
-                                            {graduationInfo && <GraduationCard data={graduationInfo} />}
-                                        </div>
-                                        <div className="gap-6 w-full flex-1 flex flex-col">
-                                            {tuitionInfo && (
-                                                <TuitionCard
-                                                    data={tuitionInfo}
-                                                    noticeData={tuitionNotice ?? undefined}
-                                                />
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    {categoryGrade && <CategoryGradeCard data={categoryGrade} />}
-                                    <div className="flex flex-col lg:flex-row gap-6 items-stretch">
-                                        <div className="flex-1">
-                                            {semesterGrade && (
-                                                <SemesterGradeCard data={semesterGrade} className="h-full" />
-                                            )}
-                                        </div>
-                                        <div className="flex-1">
-                                            {scholarshipInfo && (
-                                                <ScholarshipCard data={scholarshipInfo} className="h-full" />
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                            )
-                        ) : (
-                            <div className="flex h-48 flex-col items-center justify-center gap-4 rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
-                                <p className="text-zinc-500 text-center px-4">Please login to access student info.</p>
-                                <a
-                                    href="/login"
-                                    className="inline-flex h-10 items-center justify-center rounded-md bg-zinc-900 px-8 text-sm font-medium text-zinc-50 transition-colors hover:bg-zinc-900/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 disabled:pointer-events-none disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-50/90 dark:focus-visible:ring-zinc-300"
-                                >
-                                    Login
-                                </a>
+        <AppLayout
+            title="SSU Dashboard"
+            subtitle="Manage your academic information in one place."
+            showBackgroundSelector
+        >
+            {!isHydrated ? (
+                <DashboardSkeleton />
+            ) : isAuthenticated ? (
+                isLoading ? (
+                    <DashboardSkeleton />
+                ) : (
+                    <div className="flex flex-col gap-6">
+                        {/* Left Column (Student Info + Tuition): Takes 2/5 width */}
+                        <div className="flex gap-6  flex-col lg:flex-row">
+                            <div className="flex flex-col gap-6 lg:max-w-100">
+                                {studentInfo && <StudentInfoCard data={studentInfo} />}
+                                <ChapelCard data={chapelInfo} studentId={studentInfo?.studentId} />
                             </div>
-                        )}
-                    </main>
+                            {/* Right Column (Graduation Audit): Takes 3/5 width */}
+                            <div className="flex-1 lg:min-w-150">
+                                <TimetableCard data={timetableInfo} className="h-full" />
+                            </div>
+                        </div>
+
+                        <div className="flex gap-6 flex-col lg:flex-row">
+                            <div className={'flex-1 lg:min-w-150'}>
+                                {graduationInfo && <GraduationCard data={graduationInfo} />}
+                            </div>
+                            <div className="gap-6 w-full flex-1 flex flex-col">
+                                {tuitionInfo && (
+                                    <TuitionCard data={tuitionInfo} noticeData={tuitionNotice ?? undefined} />
+                                )}
+                            </div>
+                        </div>
+
+                        {categoryGrade && <CategoryGradeCard data={categoryGrade} />}
+                        <div className="flex flex-col lg:flex-row gap-6 items-stretch">
+                            <div className="flex-1">
+                                {semesterGrade && <SemesterGradeCard data={semesterGrade} className="h-full" />}
+                            </div>
+                            <div className="flex-1">
+                                {scholarshipInfo && <ScholarshipCard data={scholarshipInfo} className="h-full" />}
+                            </div>
+                        </div>
+                    </div>
+                )
+            ) : (
+                <div className="flex h-48 flex-col items-center justify-center gap-4 rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
+                    <p className="text-zinc-500 text-center px-4">Please login to access student info.</p>
+                    <a
+                        href="/login"
+                        className="inline-flex h-10 items-center justify-center rounded-md bg-zinc-900 px-8 text-sm font-medium text-zinc-50 transition-colors hover:bg-zinc-900/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 disabled:pointer-events-none disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-50/90 dark:focus-visible:ring-zinc-300"
+                    >
+                        Login
+                    </a>
                 </div>
-            </div>
-        </div>
+            )}
+        </AppLayout>
     );
 }

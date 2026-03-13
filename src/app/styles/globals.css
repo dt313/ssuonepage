@@ -10,6 +10,17 @@
     --primary: #0792b3;
     --header-height: 64px;
     --sidebar-width: 280px;
+    --dot-color: rgba(0, 0, 0, 0.3);
+    --gradient-from: #fdfbfb;
+    --gradient-to: #ebedee;
+
+    /* Card colors */
+    --card-bg: #ffffff;
+    --card-bg-secondary: rgba(0, 0, 0, 0.02);
+    --card-border: #e4e4e7;
+    --card-text: #18181b;
+    --card-text-secondary: #71717a;
+    --card-text-muted: #a1a1aa;
 }
 
 .dark {
@@ -17,6 +28,17 @@
     --foreground: #ededed;
     --border: rgba(255, 255, 255, 0.145);
     --accent: rgba(255, 255, 255, 0.04);
+    --dot-color: rgba(255, 255, 255, 0.1);
+    --gradient-from: #0f0f0f;
+    --gradient-to: #1a1a1a;
+
+    /* Card colors */
+    --card-bg: #18181b;
+    --card-bg-secondary: rgba(255, 255, 255, 0.02);
+    --card-border: #27272a;
+    --card-text: #fafafa;
+    --card-text-secondary: #a1a1aa;
+    --card-text-muted: #71717a;
 }
 
 @theme inline {
@@ -29,6 +51,14 @@
     --color-primary: var(--primary);
     --spacing-header: var(--header-height);
     --spacing-sidebar: var(--sidebar-width);
+
+    /* Card colors */
+    --color-card-bg: var(--card-bg);
+    --color-card-bg-secondary: var(--card-bg-secondary);
+    --color-card-border: var(--card-border);
+    --color-card-text: var(--card-text);
+    --color-card-text-secondary: var(--card-text-secondary);
+    --color-card-text-muted: var(--card-text-muted);
 
     /* Định nghĩa animations */
     --animate-fade-in: fade-in 200ms ease-out;
