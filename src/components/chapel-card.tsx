@@ -4,24 +4,11 @@ import { useState } from 'react';
 
 import { useAuthStore } from '@/store/use-auth-store';
 import { ChapelInfo } from '@/types/api';
-import {
-    AlertCircle,
-    Armchair,
-    Calendar,
-    ChevronDown,
-    Clock,
-    Info,
-    Loader2,
-    MapPin,
-    RotateCw,
-    Search,
-    Tag,
-    User,
-} from 'lucide-react';
+import { Armchair, Calendar, ChevronDown, Clock, Info, Loader2, MapPin, RotateCw, Search, Tag } from 'lucide-react';
 
 import { usaintService } from '@/services';
 
-import { cn } from '@/utils/cn';
+import { cn, getAcademicSemesters, getAcademicYears, getCurrentSemester, getCurrentYear } from '@/utils';
 
 import { ChapelAttendanceModal } from './chapel-attendance-modal';
 
@@ -36,34 +23,32 @@ export function ChapelCard({ data, studentId, className }: ChapelCardProps) {
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [isSearching, setIsSearching] = useState(false);
 
-    // Current date for determining current year and semester
-    const now = new Date();
-    const currentYear = now.getFullYear();
+    // Current year and semester for default selection
+    const currentYear = getCurrentYear();
+    const currentSemester = getCurrentSemester();
 
     // Selection state (default to current if data is not available or just use what's in data)
     const initialYear = data?.year || currentYear.toString();
-    const initialSemester = data?.semester;
+    const initialSemester = data?.semester || currentSemester;
 
     const [selectedYear, setSelectedYear] = useState(initialYear);
     const [selectedSemester, setSelectedSemester] = useState(initialSemester);
 
-    // Calculate years from admission year (from studentId) to current year
-    const admissionYear = studentId ? parseInt(studentId.substring(0, 4)) : currentYear - 4;
-    const years = [];
-    for (let y = currentYear; y >= admissionYear; y--) {
-        years.push(y.toString());
-    }
-
-    const semesters = [
-        { label: '1학기', value: '090' },
-        { label: '2학기', value: '092' },
-    ];
+    // Get years and semesters from utilities
+    const years = getAcademicYears(studentId);
+    const semesters = getAcademicSemesters();
 
     const handleFetchData = async (type: 'refresh' | 'search') => {
         if (!appSessionId) return;
 
-        if (type === 'refresh') setIsRefreshing(true);
-        else setIsSearching(true);
+        if (type === 'refresh') {
+            setIsRefreshing(true);
+            // Reset selectors back to current year and semester
+            setSelectedYear(currentYear.toString());
+            setSelectedSemester(currentSemester);
+        } else {
+            setIsSearching(true);
+        }
 
         try {
             await usaintService.callChapelApi({
