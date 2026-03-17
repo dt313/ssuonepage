@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { StudentInfo } from '@/types/api';
-import { Check, Copy, User } from 'lucide-react';
+import { Check, Copy, GraduationCap, User } from 'lucide-react';
 
 import Avatar from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -16,8 +16,22 @@ interface StudentInfoProps {
 }
 
 export function StudentInfoCard({ data, className }: StudentInfoProps) {
-    const { name, studentId, faculty, department, year, semester, englishName, avatar, admissionDate } = data;
+    const {
+        name,
+        studentId,
+        faculty,
+        department,
+        year,
+        semester,
+        englishName,
+        avatar,
+        admissionDate,
+        degreeConferralDate,
+        degreeName,
+    } = data;
     const [copied, setCopied] = useState(false);
+
+    const isGraduated = degreeConferralDate && degreeConferralDate.trim() !== '';
 
     const initials = name?.slice(0, 2).toUpperCase() || 'ST';
 
@@ -30,6 +44,7 @@ export function StudentInfoCard({ data, className }: StudentInfoProps) {
                 학년/학기: ${year}학년 ${semester}학기
                 영어 이름: ${englishName}
                 입학일자: ${admissionDate}
+                ${isGraduated ? `학위수여일자: ${degreeConferralDate}` : ''}
                         `.trim();
 
         navigator.clipboard.writeText(info).then(() => {
@@ -47,7 +62,7 @@ export function StudentInfoCard({ data, className }: StudentInfoProps) {
         >
             <div className="flex items-center justify-between border-b border-zinc-100 p-5 dark:border-zinc-900/50">
                 <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-amber-400">
                         <User className="h-5.5 w-5.5" />
                     </div>
                     <div>
@@ -67,9 +82,19 @@ export function StudentInfoCard({ data, className }: StudentInfoProps) {
                     fallback={initials}
                     src={avatar}
                 />
-                <h2 className="text-lg font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
-                    {name}님, 환영합니다
-                </h2>
+                <div className="flex flex-col gap-1">
+                    <h2 className="text-lg font-black tracking-tight text-zinc-900 dark:text-zinc-50">
+                        {name}님, 환영합니다
+                    </h2>
+                    {isGraduated && (
+                        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/20 w-fit">
+                            <GraduationCap className="h-3 w-3 text-amber-600 dark:text-amber-400" />
+                            <span className="text-[10px] font-black text-amber-700 dark:text-amber-400 uppercase tracking-tighter">
+                                졸업생 (GRADUATED)
+                            </span>
+                        </div>
+                    )}
+                </div>
             </div>
 
             <div className="flex items-center justify-between p-2 px-8">
@@ -103,8 +128,29 @@ export function StudentInfoCard({ data, className }: StudentInfoProps) {
 
             <div className="flex items-center justify-between p-2 px-8">
                 <span className="text-sm font-medium text-zinc-500 dark:text-zinc-400">입학일자</span>
-                <p className="text-sm font-semibold font-medium text-primary tracking-tight">{admissionDate}</p>
+                <p className="text-sm font-semibold text-primary tracking-tight">{admissionDate}</p>
             </div>
+
+            {isGraduated && (
+                <>
+                    <div className="mx-8 my-2 border-t border-zinc-100 dark:border-zinc-900" />
+                    <div className="flex items-center justify-between p-2 px-8">
+                        <span className="text-sm font-black text-amber-600 dark:text-amber-400 uppercase tracking-tighter">
+                            학위수여일자
+                        </span>
+                        <p className="text-sm font-black text-amber-600 dark:text-amber-400 tracking-tight">
+                            {degreeConferralDate}
+                        </p>
+                    </div>
+
+                    {degreeName && (
+                        <div className="flex items-center justify-between p-2 px-8">
+                            <span className="text-sm font-medium text-zinc-500 dark:text-zinc-400">학위명</span>
+                            <p className="text-sm font-semibold text-primary tracking-tight">{degreeName}</p>
+                        </div>
+                    )}
+                </>
+            )}
         </div>
     );
 }

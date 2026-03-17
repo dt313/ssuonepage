@@ -1,9 +1,12 @@
 import { ApiErrorResponse, UsaintApiResponse } from '@/types/api';
 import { NextResponse } from 'next/server';
 import { SapButton, SapComboBox, SapTable, SapWdaClient } from 'usaint-lib';
+
 import { withErrorHandling } from '@/utils/api-handler';
-import { getSession } from '@/utils/session';
 import redis from '@/utils/redis';
+import { getSession } from '@/utils/session';
+
+type SapComboBoxElement = SapComboBox & { el?: { attribs: { value: string } }[] };
 
 /**
  * Background worker logic - Fire and Forget
@@ -27,13 +30,13 @@ async function performBackgroundSync(appSessionId: string, admissionYear: string
 
         const preButtonId = 'ZCMW_PERIOD_RE.ID_0DC742680F42DA9747594D1AE51A0C69:VIW_MAIN.BUTTON_PREV';
         const peryrId = 'ZCMW_PERIOD_RE.ID_0DC742680F42DA9747594D1AE51A0C69:VIW_MAIN.PERYR';
-        
+
         const allResults = [];
         let detailHeader: string[] | undefined = [];
 
         while (true) {
-            const yearCombobox = wda.getControlById<SapComboBox>(peryrId);
-            const yearText = (yearCombobox as any)?.el?.[0]?.attribs?.value || '';
+            const yearCombobox = wda.getControlById<SapComboBoxElement>(peryrId);
+            const yearText = yearCombobox?.el?.[0]?.attribs?.value || '';
             const year = yearText.replace('학년도', '').trim();
 
             if (!year || parseInt(year) < Number(admissionYear)) break;
@@ -65,24 +68,24 @@ async function performBackgroundSync(appSessionId: string, admissionYear: string
                 await detailBtn?.press();
 
                 const detailTable = wda.getControlById<SapTable>('ZCMB3W0017.ID_0001:V_DETAIL.TABLE');
-                const detailData = await detailTable?.getVisibleRows();
+                const detailData = await detailTable?.getAllRows();
 
                 if (!detailHeader || detailHeader.length === 0) {
                     detailHeader = await detailTable?.getHeaders();
                 }
 
                 if (detailData) {
-                    const mappedRows = detailData.rows.map(r => r.cells.map(c => c.text));
+                    const mappedRows = detailData.rows.map((r) => r.cells.map((c) => c.text));
                     semesterResults.push({
                         index: i,
-                        details: mappedRows
+                        details: mappedRows,
                     });
                 }
             }
 
             allResults.push({
                 year,
-                subjects: semesterResults
+                subjects: semesterResults,
             });
 
             // Go to previous year
@@ -94,11 +97,11 @@ async function performBackgroundSync(appSessionId: string, admissionYear: string
         await redis.set(dataKey, JSON.stringify({ results: allResults, headers: detailHeader }), 'EX', 3600);
         await redis.set(syncKey, 'completed', 'EX', 3600);
         await redis.set(progressKey, 'Sync finished successfully');
-
-    } catch (error: any) {
+    } catch (error) {
         console.error('Background Sync Error:', error);
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
         await redis.set(syncKey, 'failed', 'EX', 3600);
-        await redis.set(progressKey, `Error: ${error.message}`);
+        await redis.set(progressKey, `Error: ${errorMessage}`);
     }
 }
 
@@ -118,11 +121,11 @@ export const POST = withErrorHandling(async (request: Request) => {
     // We start the promise but DON'T await it
     performBackgroundSync(appSessionId, admissionYear, studentId);
 
-    return NextResponse.json<UsaintApiResponse<any>>({
+    return NextResponse.json<UsaintApiResponse<{ message: string; studentId: string }>>({
         success: true,
         data: {
             message: 'Background sync started',
-            studentId
+            studentId,
         },
     });
 });

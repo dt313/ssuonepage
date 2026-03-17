@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 
-import { CategoryGradeInfo, GradeSubject } from '@/types/api';
+import { CategoryGradeInfo } from '@/types/api';
 import { ArrowDown, ArrowUp, ChevronDown, ClipboardCheck, Filter, Search, X } from 'lucide-react';
 
 import { cn } from '@/utils';
@@ -80,7 +80,7 @@ function FilterSelect({
 
 function StatsBar({ stats }: { stats: { totalCredits: number; count: number; gradeCounts: Record<string, number> } }) {
     return (
-        <div className="flex items-center gap-6">
+        <div className="flex items-center flex-wrap gap-6">
             <div className="flex items-center gap-2">
                 <div className="h-1.5 w-1.5 rounded-full bg-blue-500" />
                 <span className="text-xs md:text-sm font-bold text-zinc-400 uppercase tracking-tight">Courses</span>

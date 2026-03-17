@@ -75,6 +75,17 @@
     --animate-toast-out: toast-out 200ms ease-in forwards;
 }
 
+.glass-effect > div > div {
+    backdrop-filter: blur(12px);
+    background-color: rgba(255, 255, 255, 0.75);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.dark .glass-effect > div > div {
+    background-color: rgba(24, 24, 27, 0.75);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
 body {
     background: var(--background);
     color: var(--foreground);

@@ -1,6 +1,6 @@
-import { ApiErrorResponse, ChapelAttendance, ChapelInfo, UsaintApiRequest, UsaintApiResponse } from '@/types/api';
+import { ApiErrorResponse, ChapelAttendance, ChapelInfo, UsaintApiResponse } from '@/types/api';
 import { NextResponse } from 'next/server';
-import { SapButton, SapComboBox, SapInput, SapTable, SapWdaClient } from 'usaint-lib';
+import { SapButton, SapComboBox, SapTable, SapWdaClient } from 'usaint-lib';
 
 import { withErrorHandling } from '@/utils/api-handler';
 import { getSession } from '@/utils/session';
@@ -75,8 +75,8 @@ export const POST = withErrorHandling(async (request: Request) => {
     const infoTableData = await table.getAllRows();
 
     const chapelInfo = infoTableData.rows.map((row) => {
-        const cellTexts = row.cells.map((c: any) => c.text.trim());
-        const info: any = {};
+        const cellTexts = row.cells.map((c) => c.text.trim());
+        const info: Record<string, string> = {};
         infoTableHeaders.forEach((header, idx) => {
             info[header] = cellTexts[idx] || '';
         });
@@ -87,12 +87,15 @@ export const POST = withErrorHandling(async (request: Request) => {
     const semester = wda.getControlById<SapComboBox>('ZCMW3681.ID_0001:V_MAIN.TC_SEL_PERID')?.selectedKey || '';
 
     const attendanceTable = wda.getControlById<SapTable>(CHAPEL_IDS.ATTENDANCE);
-    const attendanceData = await attendanceTable?.getVisibleRows();
+    const attendanceData = await attendanceTable?.getAllRows();
 
-    const attendanceDetails: ChapelAttendance[] = (attendanceData?.rows ?? []).map((row, i) => {
-        const cells = row.cells;
-        const type = cells[2]?.controls[0] as SapComboBox;
-        const finalType = (type as any)?.el?.[0]?.attribs?.value || '';
+    const attendanceDetails: ChapelAttendance[] = (attendanceData?.rows ?? []).map((row) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const cells = row.cells as any;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const type = cells[2]?.controls?.[0] as any;
+         
+        const finalType = type?.el?.[0]?.attribs?.value || '';
 
         return {
             section: cells[0]?.text ?? '',

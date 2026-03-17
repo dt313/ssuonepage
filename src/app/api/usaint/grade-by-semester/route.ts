@@ -9,21 +9,64 @@ import { getControlValue, getIndexByHeader } from '@/utils/usaint-parser';
 const GRADE_IDS = {
     TABLE: 'ZCMB3W0017.ID_0001:VIW_MAIN.TABLE',
     SEARCH_BTN: 'ZCMB3W0017.ID_0001:VIW_MAIN.BTN_SEARCH',
-    // Academic Record Summary (학적부)
     ACAD_APPLIED: 'ZCMB3W0017.ID_0001:VIW_MAIN.ATTM_CRD1',
     ACAD_EARNED: 'ZCMB3W0017.ID_0001:VIW_MAIN.EARN_CRD1',
-    ACAD_SCORE_SUM: 'ZCMB3W0017.ID_0001:VIW_MAIN.GT_GPA1',
+    ACAD_SCORE: 'ZCMB3W0017.ID_0001:VIW_MAIN.GT_GPA1',
     ACAD_GPA: 'ZCMB3W0017.ID_0001:VIW_MAIN.CGPA1',
     ACAD_AVG: 'ZCMB3W0017.ID_0001:VIW_MAIN.AVG1',
     ACAD_PF: 'ZCMB3W0017.ID_0001:VIW_MAIN.PF_EARN_CRD',
-    // Proof Summary (증명)
     PROOF_APPLIED: 'ZCMB3W0017.ID_0001:VIW_MAIN.ATTM_CRD2',
     PROOF_EARNED: 'ZCMB3W0017.ID_0001:VIW_MAIN.EARN_CRD2',
-    PROOF_SCORE_SUM: 'ZCMB3W0017.ID_0001:VIW_MAIN.GT_GPA2',
+    PROOF_SCORE: 'ZCMB3W0017.ID_0001:VIW_MAIN.GT_GPA2',
     PROOF_GPA: 'ZCMB3W0017.ID_0001:VIW_MAIN.CGPA2',
     PROOF_AVG: 'ZCMB3W0017.ID_0001:VIW_MAIN.AVG2',
     PROOF_PF: 'ZCMB3W0017.ID_0001:VIW_MAIN.T_PF_ERN_CRD1',
-};
+} as const;
+
+interface TableCell {
+    text: string;
+}
+
+interface TableRow {
+    cells: TableCell[];
+}
+
+async function fetchAllTableRows(wda: SapWdaClient, tableId: string): Promise<TableRow[]> {
+    const table = wda.getControlById<SapTable>(tableId);
+    if (!table) return [];
+
+    const totalRowCount = table.getTotalRowCount();
+    const allRows: TableRow[] = [];
+    const seen = new Set<string>();
+
+    const addNewRows = (rows: TableRow[]) => {
+        for (const row of rows) {
+            const key = row.cells.map((c) => c.text).join('|');
+            if (!seen.has(key)) {
+                seen.add(key);
+                allRows.push(row);
+            }
+        }
+    };
+
+    // Lấy batch đầu tiên
+    addNewRows(table.getVisibleRows().rows as TableRow[]);
+
+    // Scroll để lấy các batch tiếp theo
+    while (allRows.length < totalRowCount) {
+        await table.scrollVertical(allRows.length);
+
+        const freshTable = wda.getControlById<SapTable>(tableId);
+        if (!freshTable) break;
+
+        const prevSize = allRows.length;
+        addNewRows(freshTable.getVisibleRows().rows as TableRow[]);
+
+        if (allRows.length === prevSize) break; // không có row mới → stop
+    }
+
+    return allRows;
+}
 
 export const POST = withErrorHandling(async (request: Request) => {
     const { appSessionId } = await request.json();
@@ -33,7 +76,6 @@ export const POST = withErrorHandling(async (request: Request) => {
     }
 
     const storedCookie = await getSession(appSessionId);
-
     if (!storedCookie) {
         return NextResponse.json<ApiErrorResponse>(
             { error: 'Session expired or invalid. Please login again.' },
@@ -46,74 +88,65 @@ export const POST = withErrorHandling(async (request: Request) => {
 
     if (!initResult.isSuccess) {
         return NextResponse.json<ApiErrorResponse>(
-            {
-                error: 'Failed to initialize grade session.',
-                html: wda.$.html(),
-            },
+            { error: 'Failed to initialize grade session.', html: wda.$.html() },
             { status: 401 },
         );
     }
 
-    // Press search button to ensure data is loaded
-    const searchBtn = wda.getControlById<SapButton>(GRADE_IDS.SEARCH_BTN);
-    if (searchBtn) {
-        await searchBtn.press();
-    }
+    await wda.getControlById<SapButton>(GRADE_IDS.SEARCH_BTN)?.press();
 
-    // Extract table data
     const table = wda.getControlById<SapTable>(GRADE_IDS.TABLE);
-    let grades: SemesterGrade[] = [];
+    const headers = table?.getHeaders() || [];
+    const allRows = await fetchAllTableRows(wda, GRADE_IDS.TABLE);
 
-    if (table) {
-        const tableData = await table.getAllRows();
-        const headers = tableData.headers || [];
+    const idx = {
+        year: getIndexByHeader(headers, '학년도'),
+        semester: getIndexByHeader(headers, '학기'),
+        applied: getIndexByHeader(headers, '신청학점'),
+        earned: getIndexByHeader(headers, '취득학점'),
+        pf: getIndexByHeader(headers, 'P/F학점'),
+        gpa: getIndexByHeader(headers, '평점평균'),
+        scoreSum: getIndexByHeader(headers, '평점계'),
+        avg: getIndexByHeader(headers, '산술평균'),
+        semRank: getIndexByHeader(headers, '학기별석차'),
+        totalRank: getIndexByHeader(headers, '전체석차'),
+        warning: getIndexByHeader(headers, '학사경고여부'),
+        counseling: getIndexByHeader(headers, '상담여부'),
+        repeat: getIndexByHeader(headers, '유급'),
+    };
 
-        const yearIdx = getIndexByHeader(headers, '학년도');
-        const semesterIdx = getIndexByHeader(headers, '학기');
-        const appliedIdx = getIndexByHeader(headers, '신청학점');
-        const earnedIdx = getIndexByHeader(headers, '취득학점');
-        const pfIdx = getIndexByHeader(headers, 'P/F학점');
-        const gpaIdx = getIndexByHeader(headers, '평점평균');
-        const scoreSumIdx = getIndexByHeader(headers, '평점계');
-        const avgIdx = getIndexByHeader(headers, '산술평균');
-        const semesterRankIdx = getIndexByHeader(headers, '학기별석차');
-        const totalRankIdx = getIndexByHeader(headers, '전체석차');
-        const warningIdx = getIndexByHeader(headers, '학사경고여부');
-        const counselingIdx = getIndexByHeader(headers, '상담여부');
-        const repeatIdx = getIndexByHeader(headers, '유급');
-
-        grades = tableData.rows.map((row) => {
-            // Calculate offset if headers length is different from cells length
-            // Typically happens when there is a 'Title' or 'Selection' column header that has no data cell
+    const grades: SemesterGrade[] = allRows
+        .filter((row) => {
             const offset = headers.length - row.cells.length;
-            const getCellText = (idx: number) => (row.cells[idx - offset]?.text || '').trim();
-
+            return (row.cells[idx.year - offset]?.text || '').trim() !== '';
+        })
+        .map((row) => {
+            const offset = headers.length - row.cells.length;
+            const get = (i: number) => (row.cells[i - offset]?.text || '').trim();
             return {
-                year: getCellText(yearIdx),
-                semester: getCellText(semesterIdx),
-                appliedCredits: getCellText(appliedIdx),
-                earnedCredits: getCellText(earnedIdx),
-                pfCredits: getCellText(pfIdx),
-                gpa: getCellText(gpaIdx),
-                scoreSum: getCellText(scoreSumIdx),
-                arithmeticAverage: getCellText(avgIdx),
-                semesterRank: getCellText(semesterRankIdx),
-                totalRank: getCellText(totalRankIdx),
-                academicWarning: getCellText(warningIdx),
-                counseling: getCellText(counselingIdx),
-                repeat: getCellText(repeatIdx),
+                year: get(idx.year),
+                semester: get(idx.semester),
+                appliedCredits: get(idx.applied),
+                earnedCredits: get(idx.earned),
+                pfCredits: get(idx.pf),
+                gpa: get(idx.gpa),
+                scoreSum: get(idx.scoreSum),
+                arithmeticAverage: get(idx.avg),
+                semesterRank: get(idx.semRank),
+                totalRank: get(idx.totalRank),
+                academicWarning: get(idx.warning),
+                counseling: get(idx.counseling),
+                repeat: get(idx.repeat),
             };
         });
-    }
 
-    // Extract summary information
     const data: SemesterGradeInfo = {
         grades,
         summary: {
             academicRecord: {
                 appliedCredits: getControlValue(wda, GRADE_IDS.ACAD_APPLIED),
                 earnedCredits: getControlValue(wda, GRADE_IDS.ACAD_EARNED),
-                scoreSum: getControlValue(wda, GRADE_IDS.ACAD_SCORE_SUM),
+                scoreSum: getControlValue(wda, GRADE_IDS.ACAD_SCORE),
                 gpa: getControlValue(wda, GRADE_IDS.ACAD_GPA),
                 arithmeticAverage: getControlValue(wda, GRADE_IDS.ACAD_AVG),
                 pfCredits: getControlValue(wda, GRADE_IDS.ACAD_PF),
@@ -121,7 +154,7 @@ export const POST = withErrorHandling(async (request: Request) => {
             proof: {
                 appliedCredits: getControlValue(wda, GRADE_IDS.PROOF_APPLIED),
                 earnedCredits: getControlValue(wda, GRADE_IDS.PROOF_EARNED),
-                scoreSum: getControlValue(wda, GRADE_IDS.PROOF_SCORE_SUM),
+                scoreSum: getControlValue(wda, GRADE_IDS.PROOF_SCORE),
                 gpa: getControlValue(wda, GRADE_IDS.PROOF_GPA),
                 arithmeticAverage: getControlValue(wda, GRADE_IDS.PROOF_AVG),
                 pfCredits: getControlValue(wda, GRADE_IDS.PROOF_PF),
@@ -129,8 +162,5 @@ export const POST = withErrorHandling(async (request: Request) => {
         },
     };
 
-    return NextResponse.json<UsaintApiResponse<SemesterGradeInfo>>({
-        success: true,
-        data,
-    });
+    return NextResponse.json<UsaintApiResponse<SemesterGradeInfo>>({ success: true, data });
 });

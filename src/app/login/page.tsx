@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 
-import { AppLayout } from '@/app/app-layout';
 import { useAuthStore } from '@/store/use-auth-store';
 import { useToastStore } from '@/store/use-toast-store';
 import { useRouter } from 'next/navigation';
@@ -79,85 +78,77 @@ export default function LoginPage() {
     };
 
     return (
-        <AppLayout hideHeader showAuth={false}>
-            <div className="flex min-h-[60vh] items-center justify-center">
-                <div className="w-full max-w-md space-y-8 rounded-xl border border-zinc-200 bg-white p-8 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-                    <div className="text-center">
-                        <h2 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
-                            Login with u-SAINT
-                        </h2>
-                        <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-                            Enter your Soongsil University student ID and password
-                        </p>
-                    </div>
+        <div className="flex min-h-[60vh] items-center justify-center">
+            <div className="w-full max-w-md flex flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm transition-all hover:shadow-md dark:border-zinc-800 dark:bg-zinc-950">
+                <div className="text-center">
+                    <h2 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+                        Login with u-SAINT
+                    </h2>
+                    <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+                        Enter your Soongsil University student ID and password
+                    </p>
+                </div>
 
-                    <form onSubmit={handleSubmit} className="mt-8 space-y-6">
-                        {error && (
-                            <div className="rounded-lg bg-red-50 p-4 text-sm text-red-600 dark:bg-red-900/20 dark:text-red-400 border border-red-100 dark:border-red-900/20">
-                                {error}
-                            </div>
-                        )}
-                        <div className="space-y-4">
-                            <div className="space-y-1">
-                                <label
-                                    htmlFor="studentId"
-                                    className="text-sm font-medium text-zinc-700 dark:text-zinc-300"
-                                >
-                                    Student ID
-                                </label>
-                                <Input
-                                    id="studentId"
-                                    type="text"
-                                    placeholder="20XXXXXXXX"
-                                    value={studentId}
-                                    onChange={(e) => {
-                                        setStudentId(e.target.value);
-                                        setError('');
-                                    }}
-                                    disabled={isLoading}
-                                    required
-                                />
-                            </div>
-
-                            <div className="space-y-1">
-                                <label
-                                    htmlFor="password"
-                                    className="text-sm font-medium text-zinc-700 dark:text-zinc-300"
-                                >
-                                    Password
-                                </label>
-                                <Input
-                                    id="password"
-                                    type="password"
-                                    placeholder="••••••••"
-                                    value={password}
-                                    onChange={(e) => {
-                                        setPassword(e.target.value);
-                                        setError('');
-                                    }}
-                                    disabled={isLoading}
-                                    required
-                                />
-                            </div>
+                <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+                    {error && (
+                        <div className="rounded-lg bg-red-50 p-4 text-sm text-red-600 dark:bg-red-900/20 dark:text-red-400 border border-red-100 dark:border-red-900/20">
+                            {error}
+                        </div>
+                    )}
+                    <div className="space-y-4">
+                        <div className="space-y-1">
+                            <label htmlFor="studentId" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                                Student ID
+                            </label>
+                            <Input
+                                id="studentId"
+                                type="text"
+                                placeholder="20XXXXXXXX"
+                                value={studentId}
+                                onChange={(e) => {
+                                    setStudentId(e.target.value);
+                                    setError('');
+                                }}
+                                disabled={isLoading}
+                                required
+                            />
                         </div>
 
-                        <Button type="submit" className="w-full" disabled={isLoading}>
-                            {isLoading ? (
-                                <>
-                                    <Loader className="mr-2 h-4 w-4" />
-                                    Logging in...
-                                </>
-                            ) : (
-                                'Login'
-                            )}
-                        </Button>
-                    </form>
-
-                    <div className="text-center text-xs text-zinc-500">
-                        <p>This application does not store your u-SAINT password.</p>
+                        <div className="space-y-1">
+                            <label htmlFor="password" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                                Password
+                            </label>
+                            <Input
+                                id="password"
+                                type="password"
+                                placeholder="••••••••"
+                                value={password}
+                                onChange={(e) => {
+                                    setPassword(e.target.value);
+                                    setError('');
+                                }}
+                                disabled={isLoading}
+                                required
+                            />
+                        </div>
                     </div>
+
+                    <Button type="submit" className="w-full" disabled={isLoading}>
+                        {isLoading ? (
+                            <>
+                                <Loader className="mr-2 h-4 w-4" />
+                                Logging in...
+                            </>
+                        ) : (
+                            'Login'
+                        )}
+                    </Button>
+                </form>
+
+                <div className="text-center text-xs text-zinc-500 mt-4">
+                    <p>This application does not store your u-SAINT password.</p>
                 </div>
             </div>
-        </AppLayout>
+        </div>
     );
 }

@@ -1,4 +1,5 @@
 import { ApiErrorResponse, StudentInfo, UsaintApiRequest, UsaintApiResponse } from '@/types/api';
+import axios from 'axios';
 import { NextResponse } from 'next/server';
 import { SapWdaClient } from 'usaint-lib';
 
@@ -95,7 +96,26 @@ export const POST = withErrorHandling(async (request: Request) => {
         // We can use a regex to extract the URL in field 3
         const urlMatch = lsDataStr.match(/3:'([^']+)'/);
         if (urlMatch && urlMatch[1]) {
-            avatarUrl = urlMatch[1].replace(/\\x([0-9a-fA-F]{2})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
+            const rawUrl = urlMatch[1].replace(/\\x([0-9a-fA-F]{2})/g, (_, hex) =>
+                String.fromCharCode(parseInt(hex, 16)),
+            );
+
+            // Fetch the image on server to convert to base64
+            // This prevents CORS issues when capturing the dashboard as an image
+            try {
+                const imageResponse = await axios.get(rawUrl, {
+                    headers: {
+                        Cookie: storedCookie,
+                    },
+                    responseType: 'arraybuffer',
+                });
+                const contentType = imageResponse.headers['content-type'];
+                const base64 = Buffer.from(imageResponse.data).toString('base64');
+                avatarUrl = `data:${contentType};base64,${base64}`;
+            } catch (e) {
+                console.error('Failed to fetch avatar image:', e);
+                avatarUrl = rawUrl; // Fallback to raw URL
+            }
         }
     }
 

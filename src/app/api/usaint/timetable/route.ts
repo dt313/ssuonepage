@@ -1,10 +1,12 @@
 import { ApiErrorResponse, UsaintApiRequest, UsaintApiResponse } from '@/types/api';
 import { NextResponse } from 'next/server';
-import { SapTable, SapWdaClient } from 'usaint-lib';
+import { SapTable, SapTableCellData, SapWdaClient } from 'usaint-lib';
 
 import { withErrorHandling } from '@/utils/api-handler';
 import { getSession } from '@/utils/session';
 import { getIndexByHeader } from '@/utils/usaint-parser';
+
+type Header = string | { text: string };
 
 export const POST = withErrorHandling(async (request: Request) => {
     const { appSessionId }: UsaintApiRequest = await request.json();
@@ -51,13 +53,13 @@ export const POST = withErrorHandling(async (request: Request) => {
     }
 
     // 4️⃣ Fetch all rows from the table
-    const tableData = await table.getVisibleRows();
+    const tableData = await table.getAllRows();
 
     // 5️⃣ Convert to 2D array (headers + rows)
-    let headers = (tableData.headers || []).map((h: any) => (typeof h === 'string' ? h : h?.text || ''));
+    let headers = (tableData.headers || []).map((h: Header) => (typeof h === 'string' ? h : h?.text || ''));
     let rows = tableData.rows.map((row) => {
         const cells = row.cells || [];
-        return cells.map((cell: any) => (cell.text || '').trim());
+        return cells.map((cell: SapTableCell) => (cell.text || '').trim());
     });
 
     // 6️⃣ Filter out the Saturday ('토') column if it is empty

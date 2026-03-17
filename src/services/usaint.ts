@@ -6,7 +6,6 @@ import {
     ScholarshipInfo,
     SemesterGradeInfo,
     StudentInfo,
-    TimetableInfo,
     TuitionInfo,
     TuitionNotice,
     UsaintApiRequest,
@@ -154,9 +153,9 @@ export const callSemesterGradeApi = async (data: UsaintApiRequest): Promise<Usai
     }
 };
 
-export const callSemesterGradeOldVersionApi = async (data: UsaintApiRequest): Promise<UsaintApiResponse<any>> => {
+export const callSemesterGradeOldVersionApi = async (data: UsaintApiRequest): Promise<UsaintApiResponse<unknown>> => {
     try {
-        const response = await axios.post<UsaintApiResponse<any>>('/api/usaint/grade-by-semester-old', data);
+        const response = await axios.post<UsaintApiResponse<unknown>>('/api/usaint/grade-by-semester-old', data);
 
         return response.data;
     } catch (error) {
@@ -194,9 +193,9 @@ export const callGradeBySemesterDetailApi = async ({
     year: string;
     semester: string;
     subjectCode: string;
-}): Promise<UsaintApiResponse<any>> => {
+}): Promise<UsaintApiResponse<unknown>> => {
     try {
-        const response = await axios.post<UsaintApiResponse<any>>('/api/usaint/grade-by-semester-detail', {
+        const response = await axios.post<UsaintApiResponse<unknown>>('/api/usaint/grade-by-semester-detail', {
             appSessionId,
             year,
             semester,
@@ -219,9 +218,9 @@ export const callGradeDetailDebugApi = async ({
 }: {
     appSessionId: string;
     admissionYear: string;
-}): Promise<UsaintApiResponse<any>> => {
+}): Promise<UsaintApiResponse<unknown>> => {
     try {
-        const response = await axios.post<UsaintApiResponse<any>>('/api/usaint/grade-detail-debug', {
+        const response = await axios.post<UsaintApiResponse<unknown>>('/api/usaint/grade-detail-debug', {
             appSessionId,
             admissionYear,
         });
@@ -240,9 +239,9 @@ export const startGradeSync = async (data: {
     appSessionId: string;
     admissionYear: string;
     studentId: string;
-}): Promise<UsaintApiResponse<any>> => {
+}): Promise<UsaintApiResponse<unknown>> => {
     try {
-        const response = await axios.post<UsaintApiResponse<any>>('/api/usaint/grade-sync/start', data);
+        const response = await axios.post<UsaintApiResponse<unknown>>('/api/usaint/grade-sync/start', data);
         return response.data;
     } catch (error) {
         console.error('Error starting grade sync:', error);
@@ -253,9 +252,9 @@ export const startGradeSync = async (data: {
     }
 };
 
-export const getGradeSyncStatus = async (studentId: string): Promise<UsaintApiResponse<any>> => {
+export const getGradeSyncStatus = async (studentId: string): Promise<UsaintApiResponse<unknown>> => {
     try {
-        const response = await axios.get<UsaintApiResponse<any>>(
+        const response = await axios.get<UsaintApiResponse<unknown>>(
             `/api/usaint/grade-sync/status?studentId=${studentId}`,
         );
         return response.data;

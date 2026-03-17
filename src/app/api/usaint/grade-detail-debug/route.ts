@@ -11,9 +11,11 @@ const MAIN_TABLE_ID = 'ZCMB3W0017.ID_0001:VIW_MAIN.TABLE_1';
 const DETAIL_TABLE_ID = 'ZCMB3W0017.ID_0001:V_DETAIL.TABLE';
 const DETAIL_BTN_PREFIX = 'ZCMB3W0017.ID_0001:VIW_MAIN.TABLE_1_BUTTON';
 
+type SapComboBoxElement = SapComboBox & { el?: { attribs: { value: string } }[] };
+
 function getCurrentYear(wda: SapWdaClient): string | null {
-    const yearCombobox = wda.getControlById<SapComboBox>(YEAR_COMBOBOX_ID);
-    const yearText = (yearCombobox as any)?.el?.[0]?.attribs?.value ?? '';
+    const yearCombobox = wda.getControlById<SapComboBoxElement>(YEAR_COMBOBOX_ID);
+    const yearText = yearCombobox?.el?.[0]?.attribs?.value ?? '';
     const year = yearText.replace('학년도', '').trim();
     return year || null;
 }
@@ -80,7 +82,7 @@ export const POST = withErrorHandling(async (request: Request) => {
                 detailHeader = await detailTable.getHeaders();
             }
 
-            const detailData = await detailTable.getVisibleRows();
+            const detailData = await detailTable.getAllRows();
             if (!detailData) continue;
 
             const result = detailData.rows.map((row) => row.cells.map((cell) => cell.text));

@@ -1,14 +1,15 @@
 'use client';
 
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { AppLayout } from '@/app/app-layout';
 import { useAuthStore } from '@/store/use-auth-store';
 import { useToastStore } from '@/store/use-toast-store';
-import { useUsaintStore } from '@/store/use-usaint-store';
 import { useUIStore } from '@/store/use-ui-store';
+import { useUsaintStore } from '@/store/use-usaint-store';
+import { toPng } from 'html-to-image';
+import { Camera, RefreshCw, Settings } from 'lucide-react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { RefreshCw } from 'lucide-react';
 
 import { CategoryGradeCard } from '@/components/category-grade-card';
 import { ChapelCard } from '@/components/chapel-card';
@@ -19,10 +20,12 @@ import { SemesterGradeCard } from '@/components/semester-grade-card';
 import { StudentInfoCard } from '@/components/student-info';
 import { TimetableCard } from '@/components/timetable-card';
 import { TuitionCard } from '@/components/tuition-card';
+import { Switch } from '@/components/ui/switch';
 
 import { usaintService } from '@/services';
 
 import { getErrorMessage } from '@/utils/get-error-message';
+
 import { cn } from '@/utils';
 
 export default function Main() {
@@ -39,11 +42,14 @@ export default function Main() {
         semesterGrade,
         scholarshipInfo,
     } = useUsaintStore();
-    const { bgType } = useUIStore();
+    const { blurEffect, setBlurEffect } = useUIStore();
     const [isLoading, setIsLoading] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
+    const [isCapturing, setIsCapturing] = useState(false);
+    const [showSettings, setShowSettings] = useState(false);
     const showToast = useToastStore((s) => s.show);
     const initialFetchDone = useRef(false);
+    const captureRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         if (isHydrated && !isAuthenticated) {
@@ -51,84 +57,140 @@ export default function Main() {
         }
     }, [isAuthenticated, isHydrated, router]);
 
-    const fetchUsaintData = useCallback(async (isManualRefresh = false) => {
-        if (!appSessionId || !isAuthenticated) return;
+    const handleCapture = async () => {
+        if (!captureRef.current) return;
 
-        // If we don't have any data yet, show the main loader
-        const hasNoData = !studentInfo && !tuitionInfo && !tuitionNotice && !timetableInfo && !graduationInfo && !chapelInfo && !categoryGrade && !semesterGrade && !scholarshipInfo;
-        
-        if (isManualRefresh) {
-            setIsRefreshing(true);
-        } else if (hasNoData) {
-            setIsLoading(true);
-        }
-
+        setIsCapturing(true);
         try {
-            const fetchTasks = [
-                usaintService.callStudentInfoApi({ appSessionId }),
-                usaintService.callTuitionApi({ appSessionId }),
-                usaintService.callTuitionNoticeApi({ appSessionId }),
-                usaintService.callTimetableApi({ appSessionId }),
-                usaintService.callGraduationApi({ appSessionId }),
-                usaintService.callCategoryGrade({ appSessionId }),
-                usaintService.callSemesterGradeApi({ appSessionId }),
-                usaintService.callSemesterGradeOldVersionApi({ appSessionId }),
-                usaintService.callChapelApi({ appSessionId }),
-                usaintService.callScholarshipApi({ appSessionId }),
-            ];
-            const apiNames: string[] = [
-                'Student Info',
-                'Tuition History',
-                'Tuition Notice',
-                'Timetable',
-                'Graduation Audit',
-                'Category Grade',
-                'Semester Grade',
-                'Semester Grade (Old)',
-                'Chapel Attendance',
-                'Scholarship',
-            ];
+            // Get current background color to ensure capture matches theme
+            const bgColor = window.getComputedStyle(document.body).backgroundColor;
 
-            // Fetch all selected data in parallel
-            const results = await Promise.allSettled(fetchTasks);
-
-            // Check for failures and show toasts
-            results.forEach((result, index) => {
-                if (result.status === 'rejected') {
-                    const error = result.reason;
-                    const name = apiNames[index];
-
-                    console.error(`Error fetching ${name}:`, error);
-
-                    if (error?.error === 'Session expired or invalid. Please login again.') {
-                        logout();
-                        return;
-                    }
-
-                    showToast({
-                        title: `${name} Failed`,
-                        message: getErrorMessage(error, `Failed to fetch ${name}`),
-                        type: 'error',
-                    });
-                }
+            const dataUrl = await toPng(captureRef.current, {
+                cacheBust: true,
+                backgroundColor: bgColor,
+                pixelRatio: 3, // Higher quality
             });
 
-            if (isManualRefresh) {
-                showToast({
-                    title: 'Sync Complete',
-                    message: 'All data has been updated successfully.',
-                    type: 'success',
-                });
-            }
-        } catch (error: any) {
-            console.error('Error fetching data:', error);
-        } finally {
-            setIsLoading(false);
-            setIsRefreshing(false);
-        }
-    }, [appSessionId, isAuthenticated, studentInfo, tuitionInfo, tuitionNotice, timetableInfo, graduationInfo, chapelInfo, categoryGrade, semesterGrade, scholarshipInfo, logout, showToast]);
+            const link = document.createElement('a');
+            link.download = `ssu-dashboard-${new Date().toISOString().split('T')[0]}.png`;
+            link.href = dataUrl;
+            link.click();
 
-    // Initial Fetch
+            showToast({ title: 'Captured', message: 'Screenshot saved successfully', type: 'success' });
+        } catch (error) {
+            console.error('Capture failed:', error);
+            showToast({ title: 'Capture Failed', message: 'Failed to capture screenshot', type: 'error' });
+        } finally {
+            setIsCapturing(false);
+        }
+    };
+
+    const fetchUsaintData = useCallback(
+        async (isManualRefresh = false) => {
+            if (!appSessionId || !isAuthenticated) return;
+
+            const hasNoData =
+                !studentInfo &&
+                !tuitionInfo &&
+                !tuitionNotice &&
+                !timetableInfo &&
+                !graduationInfo &&
+                !chapelInfo &&
+                !categoryGrade &&
+                !semesterGrade &&
+                !scholarshipInfo;
+
+            if (isManualRefresh) {
+                setIsRefreshing(true);
+                setIsLoading(true);
+                showToast({
+                    title: 'Syncing Data',
+                    message: 'Fetching latest information from uSAINT...',
+                    type: 'info',
+                });
+            } else if (hasNoData) {
+                setIsLoading(true);
+            }
+
+            try {
+                const fetchTasks = [
+                    usaintService.callStudentInfoApi({ appSessionId }),
+                    usaintService.callTuitionApi({ appSessionId }),
+                    usaintService.callTuitionNoticeApi({ appSessionId }),
+                    usaintService.callTimetableApi({ appSessionId }),
+                    usaintService.callGraduationApi({ appSessionId }),
+                    usaintService.callCategoryGrade({ appSessionId }),
+                    usaintService.callSemesterGradeApi({ appSessionId }),
+                    usaintService.callSemesterGradeOldVersionApi({ appSessionId }),
+                    usaintService.callChapelApi({ appSessionId }),
+                    usaintService.callScholarshipApi({ appSessionId }),
+                ];
+                const apiNames: string[] = [
+                    'Student Info',
+                    'Tuition History',
+                    'Tuition Notice',
+                    'Timetable',
+                    'Graduation Audit',
+                    'Category Grade',
+                    'Semester Grade',
+                    'Semester Grade (Old)',
+                    'Chapel Attendance',
+                    'Scholarship',
+                ];
+
+                const results = await Promise.allSettled(fetchTasks);
+
+                results.forEach((result, index) => {
+                    if (result.status === 'rejected') {
+                        const error = result.reason;
+                        const name = apiNames[index];
+
+                        console.error(`Error fetching ${name}:`, error);
+
+                        if (error?.error === 'Session expired or invalid. Please login again.') {
+                            logout();
+                            return;
+                        }
+
+                        showToast({
+                            title: `${name} Failed`,
+                            message: getErrorMessage(error, `Failed to fetch ${name}`),
+                            type: 'error',
+                        });
+                    }
+                });
+
+                if (isManualRefresh) {
+                    showToast({
+                        title: 'Sync Complete',
+                        message: 'All data has been updated successfully.',
+                        type: 'success',
+                    });
+                }
+            } catch (error) {
+                console.error('Error fetching data:', error);
+            } finally {
+                setIsLoading(false);
+                setIsRefreshing(false);
+            }
+        },
+        [
+            appSessionId,
+            isAuthenticated,
+            studentInfo,
+            tuitionInfo,
+            tuitionNotice,
+            timetableInfo,
+            graduationInfo,
+            chapelInfo,
+            categoryGrade,
+            semesterGrade,
+            scholarshipInfo,
+            logout,
+            showToast,
+        ],
+    );
+
     useEffect(() => {
         if (!initialFetchDone.current && isHydrated && isAuthenticated && appSessionId) {
             fetchUsaintData();
@@ -137,37 +199,76 @@ export default function Main() {
     }, [isHydrated, isAuthenticated, appSessionId, fetchUsaintData]);
 
     return (
-        <AppLayout
-            title="SSU Dashboard"
-            subtitle="Manage your academic information in one place."
-            showBackgroundSelector
-            headerRight={
-                isAuthenticated && (
+        <div>
+            <header className="flex items-center justify-between gap-4 mb-6">
+                <div className="flex flex-col gap-2">
+                    <Link href="/" className="w-fit">
+                        <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 hover:opacity-80 transition-opacity">
+                            SSU Dashboard
+                        </h1>
+                    </Link>
+                    <p className="text-zinc-500 dark:text-zinc-400"> Manage your academic information in one place.</p>
+                </div>
+
+                <div className="flex gap-4">
                     <button
                         onClick={() => fetchUsaintData(true)}
                         disabled={isRefreshing || isLoading}
                         className="flex h-10 items-center gap-2 rounded-xl border border-border bg-white dark:bg-zinc-950 px-4 text-sm font-black text-zinc-900 dark:text-zinc-50 transition-all hover:bg-accent disabled:opacity-50"
                     >
-                        <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin")} />
+                        <RefreshCw className={cn('h-4 w-4', isRefreshing && 'animate-spin')} />
                         <span>{isRefreshing ? 'Syncing...' : 'Sync Now'}</span>
                     </button>
-                )
-            }
-        >
+                    <button
+                        onClick={handleCapture}
+                        disabled={isCapturing}
+                        className="flex h-10 items-center justify-center rounded-xl border border-border bg-white dark:bg-zinc-950 px-3 text-sm font-black text-zinc-900 dark:text-zinc-50 transition-all hover:bg-accent disabled:opacity-50"
+                        title="Capture Screenshot"
+                    >
+                        <Camera className={cn('h-4 w-4', isCapturing && 'animate-spin')} />
+                    </button>
+                    <div className="relative">
+                        <button
+                            onClick={() => setShowSettings(!showSettings)}
+                            className="flex h-10 items-center justify-center rounded-xl border border-border bg-white dark:bg-zinc-950 px-3 text-sm font-black text-zinc-900 dark:text-zinc-50 transition-all hover:bg-accent"
+                            title="Settings"
+                        >
+                            <Settings className="h-4 w-4" />
+                        </button>
+                        {showSettings && (
+                            <div className="absolute right-0 top-full mt-2 w-48 rounded-xl border border-border bg-white dark:bg-zinc-950 p-3 shadow-lg z-50">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                                        Blur Effect
+                                    </span>
+                                    <Switch checked={blurEffect} onCheckedChange={setBlurEffect} />
+                                </div>
+                                <p className="mt-1 text-xs text-zinc-400">Liquid glass effect for cards</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </header>
+
             {!isHydrated ? (
                 <DashboardSkeleton />
             ) : isAuthenticated ? (
                 isLoading ? (
                     <DashboardSkeleton />
                 ) : (
-                    <div className="flex flex-col gap-6">
-                        {/* Left Column (Student Info + Tuition): Takes 2/5 width */}
+                    <div
+                        ref={captureRef}
+                        className={cn(
+                            'flex flex-col gap-6',
+                            blurEffect &&
+                                '[&>div]:[&>div>div]:backdrop-blur-md [&>div]:[&>div>div]:bg-white/70 [&>div]:[&>div>div]:dark:bg-zinc-950/70 [&>div]:[&>div>div]:border-white/20 [&>div]:[&>div>div]:dark:border-white/10',
+                        )}
+                    >
                         <div className="flex gap-6  flex-col lg:flex-row">
                             <div className="flex flex-col gap-6 lg:max-w-100">
                                 {studentInfo && <StudentInfoCard data={studentInfo} />}
                                 <ChapelCard data={chapelInfo} studentId={studentInfo?.studentId} />
                             </div>
-                            {/* Right Column (Graduation Audit): Takes 3/5 width */}
                             <div className="flex-1 lg:min-w-150">
                                 <TimetableCard data={timetableInfo} className="h-full" />
                             </div>
@@ -206,6 +307,6 @@ export default function Main() {
                     </a>
                 </div>
             )}
-        </AppLayout>
+        </div>
     );
 }
