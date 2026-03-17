@@ -24,6 +24,22 @@ export interface StudentInfo {
     hanjaName: string;
     admissionDate: string;
     avatar?: string;
+    // Graduation info
+    graduationCount?: string;
+    graduationCertificateNumber?: string;
+    graduationYear?: string;
+    graduationSemester?: string;
+    degreeConferralDate?: string;
+    degreeNumber?: string;
+    degreeName?: string;
+    isEarlyGraduation?: string;
+    totalGraduationRank?: string;
+    totalGraduationHeadcount?: string;
+    // Major info
+    doubleMajor?: string;
+    minor?: string;
+    integratedMajor?: string;
+    deepMajor?: string;
 }
 
 export interface TuitionInfo {

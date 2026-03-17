@@ -21,6 +21,33 @@ const CONTROL_IDS = {
     EMAIL: 'ZCMW1001.ID_0001:VIW_DEFAULT.SMTP_ADDR',
     AVATAR: 'ZCMW1001.ID_0001:VIW_DEFAULT.ST_IMAGE',
     ADMISSION_DATE: 'ZCMW1001.ID_0001:VIW_DEFAULT.TC_DEFAULT_APPLY_DT',
+    // Graduation info
+    GRADUATION_COUNT: 'ZCMW1001.ID_0001:VIW_DEFAULT.TC_DEFAULT_GRDU_NO',
+    GRADUATION_CERT_NO: 'ZCMW1001.ID_0001:VIW_DEFAULT.TC_DEFAULT_CERTIFY_NO',
+    GRADUATION_YEAR: 'ZCMW1001.ID_0001:VIW_DEFAULT.TC_DEFAULT_GRDU_PERYR',
+    GRADUATION_SEMESTER: 'ZCMW1001.ID_0001:VIW_DEFAULT.TC_DEFAULT_GRDU_PERIDT',
+    DEGREE_CONFERRAL_DATE: 'ZCMW1001.ID_0001:VIW_DEFAULT.TC_DEFAULT_GRDU_DATE',
+    DEGREE_NUMBER: 'ZCMW1001.ID_0001:VIW_DEFAULT.TC_DEFAULT_ACAD_SEQ',
+    DEGREE_NAME: 'ZCMW1001.ID_0001:VIW_DEFAULT.TC_DEFAULT_ACAD_CDT',
+    IS_EARLY_GRADUATION: 'ZCMW1001.ID_0001:VIW_DEFAULT.TC_DEFAULT_E_GRAD',
+    TOTAL_GRAD_RANK: 'ZCMW1001.ID_0001:VIW_DEFAULT.TC_DEFAULT_TOT_ORDER',
+    TOTAL_GRAD_HEADCOUNT: 'ZCMW1001.ID_0001:VIW_DEFAULT.TC_DEFAULT_TDPT_NUMBER',
+    // Major info
+    DOUBLE_MAJOR: 'ZCMW1001.ID_0001:VIW_DEFAULT.TC_DEFAULT_CG_STEXT1',
+    MINOR: 'ZCMW1001.ID_0001:VIW_DEFAULT.TC_DEFAULT_CG_STEXT2',
+    INTEGRATED_MAJOR: 'ZCMW1001.ID_0001:VIW_DEFAULT.TC_DEFAULT_CG_STEXT3',
+    DEEP_MAJOR: 'ZCMW1001.ID_0001:VIW_DEFAULT.TC_DEFAULT_CG_STEXT4',
+};
+
+/**
+ * Normalizes a value: if it's '0000', empty, or just whitespace, returns an empty string.
+ */
+const normalizeValue = (val: string): string => {
+    const trimmed = (val || '').trim();
+    if (!trimmed || trimmed === '0000' || trimmed === '0.00' || trimmed === '0') {
+        return '';
+    }
+    return trimmed;
 };
 
 export const POST = withErrorHandling(async (request: Request) => {
@@ -85,6 +112,22 @@ export const POST = withErrorHandling(async (request: Request) => {
         hanjaName: getControlValue(wda, CONTROL_IDS.HANJA_NAME),
         admissionDate: getControlValue(wda, CONTROL_IDS.ADMISSION_DATE),
         avatar: avatarUrl,
+        // Graduation info
+        graduationCount: normalizeValue(getControlValue(wda, CONTROL_IDS.GRADUATION_COUNT)),
+        graduationCertificateNumber: normalizeValue(getControlValue(wda, CONTROL_IDS.GRADUATION_CERT_NO)),
+        graduationYear: normalizeValue(getControlValue(wda, CONTROL_IDS.GRADUATION_YEAR)),
+        graduationSemester: normalizeValue(getControlValue(wda, CONTROL_IDS.GRADUATION_SEMESTER)),
+        degreeConferralDate: normalizeValue(getControlValue(wda, CONTROL_IDS.DEGREE_CONFERRAL_DATE)),
+        degreeNumber: normalizeValue(getControlValue(wda, CONTROL_IDS.DEGREE_NUMBER)),
+        degreeName: normalizeValue(getControlValue(wda, CONTROL_IDS.DEGREE_NAME)),
+        isEarlyGraduation: normalizeValue(getControlValue(wda, CONTROL_IDS.IS_EARLY_GRADUATION)),
+        totalGraduationRank: normalizeValue(getControlValue(wda, CONTROL_IDS.TOTAL_GRAD_RANK)),
+        totalGraduationHeadcount: normalizeValue(getControlValue(wda, CONTROL_IDS.TOTAL_GRAD_HEADCOUNT)),
+        // Major info
+        doubleMajor: normalizeValue(getControlValue(wda, CONTROL_IDS.DOUBLE_MAJOR)),
+        minor: normalizeValue(getControlValue(wda, CONTROL_IDS.MINOR)),
+        integratedMajor: normalizeValue(getControlValue(wda, CONTROL_IDS.INTEGRATED_MAJOR)),
+        deepMajor: normalizeValue(getControlValue(wda, CONTROL_IDS.DEEP_MAJOR)),
     };
 
     // 4️⃣ Return the data

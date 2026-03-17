@@ -1,12 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 
 import { AppLayout } from '@/app/app-layout';
 import { useAuthStore } from '@/store/use-auth-store';
 import { useToastStore } from '@/store/use-toast-store';
 import { useUsaintStore } from '@/store/use-usaint-store';
+import { useUIStore } from '@/store/use-ui-store';
 import { useRouter } from 'next/navigation';
+import { RefreshCw } from 'lucide-react';
 
 import { CategoryGradeCard } from '@/components/category-grade-card';
 import { ChapelCard } from '@/components/chapel-card';
@@ -21,6 +23,7 @@ import { TuitionCard } from '@/components/tuition-card';
 import { usaintService } from '@/services';
 
 import { getErrorMessage } from '@/utils/get-error-message';
+import { cn } from '@/utils';
 
 export default function Main() {
     const router = useRouter();
@@ -36,8 +39,11 @@ export default function Main() {
         semesterGrade,
         scholarshipInfo,
     } = useUsaintStore();
+    const { bgType } = useUIStore();
     const [isLoading, setIsLoading] = useState(false);
+    const [isRefreshing, setIsRefreshing] = useState(false);
     const showToast = useToastStore((s) => s.show);
+    const initialFetchDone = useRef(false);
 
     useEffect(() => {
         if (isHydrated && !isAuthenticated) {
@@ -45,85 +51,108 @@ export default function Main() {
         }
     }, [isAuthenticated, isHydrated, router]);
 
-    useEffect(() => {
-        const fetchUsaintData = async () => {
-            if (!appSessionId || !isAuthenticated) return;
+    const fetchUsaintData = useCallback(async (isManualRefresh = false) => {
+        if (!appSessionId || !isAuthenticated) return;
 
-            // If we don't have any data yet, show the loader
-            if (
-                !studentInfo &&
-                !tuitionInfo &&
-                !tuitionNotice &&
-                !timetableInfo &&
-                !graduationInfo &&
-                !chapelInfo &&
-                !categoryGrade &&
-                !semesterGrade &&
-                !scholarshipInfo
-            ) {
-                setIsLoading(true);
-            }
+        // If we don't have any data yet, show the main loader
+        const hasNoData = !studentInfo && !tuitionInfo && !tuitionNotice && !timetableInfo && !graduationInfo && !chapelInfo && !categoryGrade && !semesterGrade && !scholarshipInfo;
+        
+        if (isManualRefresh) {
+            setIsRefreshing(true);
+        } else if (hasNoData) {
+            setIsLoading(true);
+        }
 
-            try {
-                // Fetch all data in parallel
-                const results = await Promise.allSettled([
-                    usaintService.callStudentInfoApi({ appSessionId }),
-                    usaintService.callTuitionApi({ appSessionId }),
-                    usaintService.callTuitionNoticeApi({ appSessionId }),
-                    usaintService.callTimetableApi({ appSessionId }),
-                    usaintService.callGraduationApi({ appSessionId }),
-                    usaintService.callChapelApi({ appSessionId }),
-                    usaintService.callCategoryGrade({ appSessionId }),
-                    usaintService.callSemesterGradeApi({ appSessionId }),
-                    usaintService.callSemesterGradeOldVersionApi({ appSessionId }),
-                    usaintService.callScholarshipApi({ appSessionId }),
-                ]);
+        try {
+            const fetchTasks = [
+                usaintService.callStudentInfoApi({ appSessionId }),
+                usaintService.callTuitionApi({ appSessionId }),
+                usaintService.callTuitionNoticeApi({ appSessionId }),
+                usaintService.callTimetableApi({ appSessionId }),
+                usaintService.callGraduationApi({ appSessionId }),
+                usaintService.callCategoryGrade({ appSessionId }),
+                usaintService.callSemesterGradeApi({ appSessionId }),
+                usaintService.callSemesterGradeOldVersionApi({ appSessionId }),
+                usaintService.callChapelApi({ appSessionId }),
+                usaintService.callScholarshipApi({ appSessionId }),
+            ];
+            const apiNames: string[] = [
+                'Student Info',
+                'Tuition History',
+                'Tuition Notice',
+                'Timetable',
+                'Graduation Audit',
+                'Category Grade',
+                'Semester Grade',
+                'Semester Grade (Old)',
+                'Chapel Attendance',
+                'Scholarship',
+            ];
 
-                // Check for failures and show toasts
-                results.forEach((result, index) => {
-                    if (result.status === 'rejected') {
-                        const error = result.reason;
-                        const apiNames = [
-                            'Student Info',
-                            'Tuition History',
-                            'Tuition Notice',
-                            'Timetable',
-                            'Graduation Audit',
-                            'Chapel Attendance',
-                            'Category Grade',
-                            'Semester Grade',
-                        ];
+            // Fetch all selected data in parallel
+            const results = await Promise.allSettled(fetchTasks);
 
-                        console.error(`Error fetching ${apiNames[index]}:`, error);
+            // Check for failures and show toasts
+            results.forEach((result, index) => {
+                if (result.status === 'rejected') {
+                    const error = result.reason;
+                    const name = apiNames[index];
 
-                        if (error?.error === 'Session expired or invalid. Please login again.') {
-                            logout();
-                            return;
-                        }
+                    console.error(`Error fetching ${name}:`, error);
 
-                        // Only show toast for critical failures or if we have no cached data
-                        showToast({
-                            title: `${apiNames[index]} Failed`,
-                            message: getErrorMessage(error, `Failed to fetch ${apiNames[index]}`),
-                            type: 'error',
-                        });
+                    if (error?.error === 'Session expired or invalid. Please login again.') {
+                        logout();
+                        return;
                     }
-                });
-            } catch (error: any) {
-                console.error('Error fetching data:', error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
 
-        fetchUsaintData();
-    }, [appSessionId, isAuthenticated, logout, showToast]);
+                    showToast({
+                        title: `${name} Failed`,
+                        message: getErrorMessage(error, `Failed to fetch ${name}`),
+                        type: 'error',
+                    });
+                }
+            });
+
+            if (isManualRefresh) {
+                showToast({
+                    title: 'Sync Complete',
+                    message: 'All data has been updated successfully.',
+                    type: 'success',
+                });
+            }
+        } catch (error: any) {
+            console.error('Error fetching data:', error);
+        } finally {
+            setIsLoading(false);
+            setIsRefreshing(false);
+        }
+    }, [appSessionId, isAuthenticated, studentInfo, tuitionInfo, tuitionNotice, timetableInfo, graduationInfo, chapelInfo, categoryGrade, semesterGrade, scholarshipInfo, logout, showToast]);
+
+    // Initial Fetch
+    useEffect(() => {
+        if (!initialFetchDone.current && isHydrated && isAuthenticated && appSessionId) {
+            fetchUsaintData();
+            initialFetchDone.current = true;
+        }
+    }, [isHydrated, isAuthenticated, appSessionId, fetchUsaintData]);
 
     return (
         <AppLayout
             title="SSU Dashboard"
             subtitle="Manage your academic information in one place."
             showBackgroundSelector
+            headerRight={
+                isAuthenticated && (
+                    <button
+                        onClick={() => fetchUsaintData(true)}
+                        disabled={isRefreshing || isLoading}
+                        className="flex h-10 items-center gap-2 rounded-xl border border-border bg-white dark:bg-zinc-950 px-4 text-sm font-black text-zinc-900 dark:text-zinc-50 transition-all hover:bg-accent disabled:opacity-50"
+                    >
+                        <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin")} />
+                        <span>{isRefreshing ? 'Syncing...' : 'Sync Now'}</span>
+                    </button>
+                )
+            }
         >
             {!isHydrated ? (
                 <DashboardSkeleton />

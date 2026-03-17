@@ -4,6 +4,7 @@ import { SapTable, SapWdaClient } from 'usaint-lib';
 
 import { withErrorHandling } from '@/utils/api-handler';
 import { getSession } from '@/utils/session';
+import { getIndexByHeader } from '@/utils/usaint-parser';
 
 export const POST = withErrorHandling(async (request: Request) => {
     const { appSessionId }: UsaintApiRequest = await request.json();
@@ -51,27 +52,27 @@ export const POST = withErrorHandling(async (request: Request) => {
 
     // 4️⃣ Fetch all rows from the table
     const tableData = await table.getAllRows();
+    const headers = tableData.headers || [];
 
-    if (tableData.rows.length > 0) {
-        console.log(`First row cells count: ${tableData.rows[0].cells.length}`);
-    }
-
-    const getCellText = (row: any, headerName: string) => {
-        const idx = tableData.headers.findIndex((h) => h.includes(headerName));
-        if (idx !== -1 && row.cells[idx]) {
-            return row.cells[idx].text;
-        }
-        return '';
-    };
+    const yearIdx = getIndexByHeader(headers, '학년도');
+    const semesterIdx = getIndexByHeader(headers, '학기');
+    const amountIdx = getIndexByHeader(headers, '등록금액');
+    const scholarshipIdx = getIndexByHeader(headers, '사전감면');
+    const netAmountIdx = getIndexByHeader(headers, '납부금액');
 
     const tuitionList: TuitionInfo[] = tableData.rows
-        .map((row) => ({
-            year: getCellText(row, '학년도'),
-            semester: getCellText(row, '학기'),
-            amount: getCellText(row, '등록금액'),
-            scholarship: getCellText(row, '사전감면'),
-            netAmount: getCellText(row, '납부금액'),
-        }))
+        .map((row) => {
+            const offset = headers.length - row.cells.length;
+            const getCellText = (idx: number) => (row.cells[idx - offset]?.text || '').trim();
+
+            return {
+                year: getCellText(yearIdx),
+                semester: getCellText(semesterIdx),
+                amount: getCellText(amountIdx),
+                scholarship: getCellText(scholarshipIdx),
+                netAmount: getCellText(netAmountIdx),
+            };
+        })
         .filter((item) => item.year !== '');
 
     return NextResponse.json<UsaintApiResponse<TuitionInfo[]>>({

@@ -127,7 +127,7 @@ export function ChapelCard({ data, studentId, className }: ChapelCardProps) {
                             >
                                 {years.map((y) => (
                                     <option key={y} value={y}>
-                                        {y}
+                                        {y}학년
                                     </option>
                                 ))}
                             </select>

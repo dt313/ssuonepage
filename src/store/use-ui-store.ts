@@ -17,6 +17,9 @@ export const useUIStore = create<UIState>()(
         {
             name: 'ui-storage',
             storage: createJSONStorage(() => localStorage),
+            partialize: (state) => ({
+                bgType: state.bgType,
+            }),
         },
     ),
 );

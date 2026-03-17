@@ -6,13 +6,17 @@ interface DropdownProps {
     trigger: React.ReactNode;
     children: React.ReactNode;
     align?: 'end' | 'start' | 'center';
+    className?: string;
+    id?: string;
 }
 
-export const Dropdown: React.FC<DropdownProps> = ({ trigger, children, align = 'start' }) => {
+export const Dropdown: React.FC<DropdownProps> = ({ trigger, children, align = 'start', className, id }) => {
     return (
         <DropdownMenu.Root>
             <DropdownMenu.Trigger asChild>
-                <div className="cursor-pointer">{trigger}</div>
+                <div className="cursor-pointer" id={id}>
+                    {trigger}
+                </div>
             </DropdownMenu.Trigger>
 
             <DropdownMenu.Portal>
@@ -20,26 +24,15 @@ export const Dropdown: React.FC<DropdownProps> = ({ trigger, children, align = '
                     side="bottom"
                     align={align}
                     sideOffset={12}
-                    className="
-                        min-w-64 z-60 max-w-120 rounded-lg border
-                        border-zinc-200 bg-white shadow-lg
-                        dark:border-zinc-800 dark:bg-zinc-900
+                    className={`
+                        min-w-64 z-60 rounded-xl border
+                        border-card-border bg-card-bg shadow-xl
                         outline-none
-                         data-[state=open]:animate-dropdown-in
+                        data-[state=open]:animate-dropdown-in
                         data-[state=closed]:animate-dropdown-out
-                    "
+                        ${className || ''}
+                    `}
                 >
-                    {/* Arrow
-                    <DropdownMenu.Arrow
-                        className="
-                            fill-white
-                            dark:fill-zinc-900
-                            stroke-zinc-200
-                            dark:stroke-zinc-800
-                        "
-                        width={12}
-                        height={6}
-                    /> */}
                     {children}
                 </DropdownMenu.Content>
             </DropdownMenu.Portal>

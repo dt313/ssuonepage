@@ -4,7 +4,7 @@ import { SapButton, SapTable, SapWdaClient } from 'usaint-lib';
 
 import { withErrorHandling } from '@/utils/api-handler';
 import { getSession } from '@/utils/session';
-import { getControlValue } from '@/utils/usaint-parser';
+import { getControlValue, getIndexByHeader } from '@/utils/usaint-parser';
 
 const GRADE_IDS = {
     TABLE: 'ZCMB3W0017.ID_0001:VIW_MAIN.TABLE',
@@ -66,21 +66,44 @@ export const POST = withErrorHandling(async (request: Request) => {
 
     if (table) {
         const tableData = await table.getAllRows();
-        grades = tableData.rows.map((row) => ({
-            year: (row.cells[0]?.text || '').trim(),
-            semester: (row.cells[1]?.text || '').trim(),
-            appliedCredits: (row.cells[2]?.text || '').trim(),
-            earnedCredits: (row.cells[3]?.text || '').trim(),
-            pfCredits: (row.cells[4]?.text || '').trim(),
-            gpa: (row.cells[5]?.text || '').trim(),
-            scoreSum: (row.cells[6]?.text || '').trim(),
-            arithmeticAverage: (row.cells[7]?.text || '').trim(),
-            semesterRank: (row.cells[8]?.text || '').trim(),
-            totalRank: (row.cells[9]?.text || '').trim(),
-            academicWarning: (row.cells[10]?.text || '').trim(),
-            counseling: (row.cells[11]?.text || '').trim(),
-            repeat: (row.cells[12]?.text || '').trim(),
-        }));
+        const headers = tableData.headers || [];
+
+        const yearIdx = getIndexByHeader(headers, '학년도');
+        const semesterIdx = getIndexByHeader(headers, '학기');
+        const appliedIdx = getIndexByHeader(headers, '신청학점');
+        const earnedIdx = getIndexByHeader(headers, '취득학점');
+        const pfIdx = getIndexByHeader(headers, 'P/F학점');
+        const gpaIdx = getIndexByHeader(headers, '평점평균');
+        const scoreSumIdx = getIndexByHeader(headers, '평점계');
+        const avgIdx = getIndexByHeader(headers, '산술평균');
+        const semesterRankIdx = getIndexByHeader(headers, '학기별석차');
+        const totalRankIdx = getIndexByHeader(headers, '전체석차');
+        const warningIdx = getIndexByHeader(headers, '학사경고여부');
+        const counselingIdx = getIndexByHeader(headers, '상담여부');
+        const repeatIdx = getIndexByHeader(headers, '유급');
+
+        grades = tableData.rows.map((row) => {
+            // Calculate offset if headers length is different from cells length
+            // Typically happens when there is a 'Title' or 'Selection' column header that has no data cell
+            const offset = headers.length - row.cells.length;
+            const getCellText = (idx: number) => (row.cells[idx - offset]?.text || '').trim();
+
+            return {
+                year: getCellText(yearIdx),
+                semester: getCellText(semesterIdx),
+                appliedCredits: getCellText(appliedIdx),
+                earnedCredits: getCellText(earnedIdx),
+                pfCredits: getCellText(pfIdx),
+                gpa: getCellText(gpaIdx),
+                scoreSum: getCellText(scoreSumIdx),
+                arithmeticAverage: getCellText(avgIdx),
+                semesterRank: getCellText(semesterRankIdx),
+                totalRank: getCellText(totalRankIdx),
+                academicWarning: getCellText(warningIdx),
+                counseling: getCellText(counselingIdx),
+                repeat: getCellText(repeatIdx),
+            };
+        });
     }
 
     // Extract summary information

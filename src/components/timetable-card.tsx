@@ -197,8 +197,18 @@ export function TimetableCard({ data, className }: TimetableCardProps) {
 
         if (currentDay === 0) return null;
 
-        const dayIdx = currentDay;
-        const classesToday: { subject: string; time: string; location: string; startTimeMinutes: number }[] = [];
+        const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+        const dayName = dayNames[currentDay];
+
+        // Check today first
+        let dayIdx = currentDay;
+        let classesToday: {
+            subject: string;
+            time: string;
+            location: string;
+            startTimeMinutes: number;
+            dayName: string;
+        }[] = [];
 
         data.slice(1).forEach((row) => {
             const cell = row[dayIdx];
@@ -208,14 +218,41 @@ export function TimetableCard({ data, className }: TimetableCardProps) {
                 const [h, m] = startTimeStr.split(':').map(Number);
                 const startTimeMinutes = h * 60 + m;
 
-                if (startTimeMinutes > currentMinutes) {
-                    classesToday.push({ ...parsed, startTimeMinutes });
+                if (dayIdx === currentDay && startTimeMinutes > currentMinutes) {
+                    classesToday.push({ ...parsed, startTimeMinutes, dayName });
+                } else if (dayIdx !== currentDay) {
+                    classesToday.push({ ...parsed, startTimeMinutes, dayName });
                 }
             }
         });
 
+        // If no class today, check next days (up to 7 days)
+        if (classesToday.length === 0) {
+            for (let i = 1; i <= 6; i++) {
+                const nextDayIdx = (currentDay + i) % 7;
+                if (nextDayIdx === 0) continue;
+
+                const nextDayName = dayNames[nextDayIdx];
+                data.slice(1).forEach((row) => {
+                    const cell = row[nextDayIdx];
+                    const parsed = parseTimetableCell(cell);
+                    if (parsed && parsed.time) {
+                        classesToday.push({ ...parsed, startTimeMinutes: 0, dayName: nextDayName });
+                    }
+                });
+
+                if (classesToday.length > 0) break;
+            }
+        }
+
         if (classesToday.length > 0) {
-            classesToday.sort((a, b) => a.startTimeMinutes - b.startTimeMinutes);
+            classesToday.sort((a, b) => {
+                if (a.dayName === b.dayName) {
+                    return a.startTimeMinutes - b.startTimeMinutes;
+                }
+                const dayOrder = ['월', '화', '수', '목', '금', '토', '일'];
+                return dayOrder.indexOf(a.dayName) - dayOrder.indexOf(b.dayName);
+            });
             const classInfo = classesToday[0];
             const palette = subjectColorMap.get(classInfo.subject);
             return { ...classInfo, palette };
@@ -266,7 +303,7 @@ export function TimetableCard({ data, className }: TimetableCardProps) {
                                         nextClass.palette?.text,
                                     )}
                                 >
-                                    Next Class
+                                    {nextClass.dayName}요일 Next Class
                                 </span>
                                 {nextClass.location && (
                                     <div className="flex items-center gap-1 opacity-60">

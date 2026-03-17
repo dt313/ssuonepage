@@ -4,6 +4,7 @@ import { SapTable, SapWdaClient } from 'usaint-lib';
 
 import { withErrorHandling } from '@/utils/api-handler';
 import { getSession } from '@/utils/session';
+import { getIndexByHeader } from '@/utils/usaint-parser';
 
 const SCHOLARSHIP_IDS = {
     TABLE: 'ZCMW7530.ID_0001:VIW_MAIN.TABLE_2',
@@ -24,7 +25,7 @@ export const POST = withErrorHandling(async (request: Request) => {
         );
     }
 
-    const wda = new SapWdaClient('https://ecc.ssu.ac.kr:8443', 'ZCMW7530n', storedCookie);
+    const wda = new SapWdaClient('https://ecc.ssu.ac.kr:8443', 'ZCMW7530', storedCookie);
 
     const initResult = await wda.initialize();
 
@@ -43,18 +44,29 @@ export const POST = withErrorHandling(async (request: Request) => {
 
     if (table) {
         const tableData = await table.getAllRows();
+        const headers = tableData.headers || [];
+
+        const yearIdx = getIndexByHeader(headers, '학년');
+        const semesterIdx = getIndexByHeader(headers, '학기');
+        const typeIdx = getIndexByHeader(headers, '지급방법');
+        const nameIdx = getIndexByHeader(headers, '장학금명');
+        const statusIdx = getIndexByHeader(headers, '처리상태');
+        const processDateIdx = getIndexByHeader(headers, '처리일자');
+        const amountIdx = getIndexByHeader(headers, '선발금액');
+        const actualAmountIdx = getIndexByHeader(headers, '실수혜금액');
+        const rejectReasonIdx = getIndexByHeader(headers, '탈락사유');
 
         scholarships.push(
             ...tableData.rows.map((row) => ({
-                year: (row.cells[0]?.text || '').trim(),
-                semester: (row.cells[1]?.text || '').trim(),
-                type: (row.cells[2]?.text || '').trim(),
-                name: (row.cells[3]?.text || '').trim(),
-                status: (row.cells[4]?.text || '').trim(),
-                rejectReason: (row.cells[6]?.text || '').trim(),
-                amount: (row.cells[8]?.text || '').trim(),
-                actualAmount: (row.cells[9]?.text || '').trim(),
-                processDate: (row.cells[7]?.text || '').trim(),
+                year: (row.cells[yearIdx]?.text || '').trim(),
+                semester: (row.cells[semesterIdx]?.text || '').trim(),
+                type: (row.cells[typeIdx]?.text || '').trim(),
+                name: (row.cells[nameIdx]?.text || '').trim(),
+                status: (row.cells[statusIdx]?.text || '').trim(),
+                rejectReason: (row.cells[rejectReasonIdx]?.text || '').trim(),
+                amount: (row.cells[amountIdx]?.text || '').trim(),
+                actualAmount: (row.cells[actualAmountIdx]?.text || '').trim(),
+                processDate: (row.cells[processDateIdx]?.text || '').trim(),
             })),
         );
     }

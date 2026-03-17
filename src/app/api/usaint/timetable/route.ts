@@ -4,6 +4,7 @@ import { SapTable, SapWdaClient } from 'usaint-lib';
 
 import { withErrorHandling } from '@/utils/api-handler';
 import { getSession } from '@/utils/session';
+import { getIndexByHeader } from '@/utils/usaint-parser';
 
 export const POST = withErrorHandling(async (request: Request) => {
     const { appSessionId }: UsaintApiRequest = await request.json();
@@ -53,14 +54,14 @@ export const POST = withErrorHandling(async (request: Request) => {
     const tableData = await table.getVisibleRows();
 
     // 5️⃣ Convert to 2D array (headers + rows)
-    let headers = tableData.headers || [];
+    let headers = (tableData.headers || []).map((h: any) => (typeof h === 'string' ? h : h?.text || ''));
     let rows = tableData.rows.map((row) => {
         const cells = row.cells || [];
         return cells.map((cell: any) => (cell.text || '').trim());
     });
 
     // 6️⃣ Filter out the Saturday ('토') column if it is empty
-    const satIdx = headers.findIndex((h) => h.includes('토'));
+    const satIdx = getIndexByHeader(headers, '토');
     if (satIdx !== -1) {
         const isSatEmpty = rows.every((row) => !row[satIdx] || row[satIdx].trim() === '');
         if (isSatEmpty) {

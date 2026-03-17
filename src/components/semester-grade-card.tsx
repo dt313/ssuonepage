@@ -1,9 +1,11 @@
 'use client';
 
 import { SemesterGradeInfo } from '@/types/api';
-import { Award, BarChart3, GraduationCap, TrendingUp } from 'lucide-react';
+import { Award, GraduationCap, TrendingUp } from 'lucide-react';
 
 import { cn } from '@/utils';
+
+import { GPATrendChart } from './gpa-trend-chart';
 
 interface SemesterGradeCardProps {
     data: SemesterGradeInfo;
@@ -12,7 +14,6 @@ interface SemesterGradeCardProps {
 
 export function SemesterGradeCard({ data, className }: SemesterGradeCardProps) {
     const academicSummary = data.summary.academicRecord;
-    const proofSummary = data.summary.proof;
 
     return (
         <div
@@ -28,7 +29,7 @@ export function SemesterGradeCard({ data, className }: SemesterGradeCardProps) {
                     </div>
                     <div>
                         <h3 className="text-lg font-black text-zinc-900 dark:text-zinc-50 tracking-tight">
-                            하기별 성적
+                            학기별 성적
                         </h3>
                         <p className="text-sm text-zinc-400 tracking-wider">Semester grades overview</p>
                     </div>
@@ -36,8 +37,8 @@ export function SemesterGradeCard({ data, className }: SemesterGradeCardProps) {
             </div>
 
             {/* Total Summary Section */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 p-6 bg-zinc-50/40 dark:bg-zinc-900/20 border-b border-zinc-100 dark:border-zinc-900">
-                <div className="flex flex-col gap-1">
+            <div className="grid grid-cols-2 gap-4 p-6 bg-zinc-50/40 dark:bg-zinc-900/20 border-b border-zinc-100 dark:border-zinc-900">
+                <div className="flex flex-col items-center gap-1">
                     <span className="text-[12px] font-black text-zinc-400 uppercase tracking-widest">증명평점평균</span>
                     <div className="flex items-center gap-2">
                         <Award className="h-4 w-4 text-amber-500" />
@@ -46,7 +47,7 @@ export function SemesterGradeCard({ data, className }: SemesterGradeCardProps) {
                         </span>
                     </div>
                 </div>
-                <div className="flex flex-col gap-1">
+                <div className="flex flex-col items-center gap-1">
                     <span className="text-[12px] font-black text-zinc-400 uppercase tracking-widest">
                         학적부취득학점
                     </span>
@@ -57,18 +58,10 @@ export function SemesterGradeCard({ data, className }: SemesterGradeCardProps) {
                         </span>
                     </div>
                 </div>
-                <div className="flex flex-col gap-1">
-                    <span className="text-[12px] font-black text-zinc-400 uppercase tracking-widest">
-                        학적부산술평균
-                    </span>
-                    <div className="flex items-center gap-2">
-                        <BarChart3 className="h-4 w-4 text-emerald-500" />
-                        <span className="text-xl font-black text-zinc-900 dark:text-zinc-50 tabular-nums">
-                            {academicSummary.arithmeticAverage}
-                        </span>
-                    </div>
-                </div>
             </div>
+
+            {/* GPA Trend Chart Component */}
+            <GPATrendChart grades={data.grades} />
 
             <div className="flex-1 overflow-x-auto">
                 <table className="w-full text-left text-sm">

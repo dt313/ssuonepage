@@ -236,7 +236,11 @@ export const callGradeDetailDebugApi = async ({
     }
 };
 
-export const startGradeSync = async (data: { appSessionId: string, admissionYear: string, studentId: string }): Promise<UsaintApiResponse<any>> => {
+export const startGradeSync = async (data: {
+    appSessionId: string;
+    admissionYear: string;
+    studentId: string;
+}): Promise<UsaintApiResponse<any>> => {
     try {
         const response = await axios.post<UsaintApiResponse<any>>('/api/usaint/grade-sync/start', data);
         return response.data;
@@ -251,7 +255,9 @@ export const startGradeSync = async (data: { appSessionId: string, admissionYear
 
 export const getGradeSyncStatus = async (studentId: string): Promise<UsaintApiResponse<any>> => {
     try {
-        const response = await axios.get<UsaintApiResponse<any>>(`/api/usaint/grade-sync/status?studentId=${studentId}`);
+        const response = await axios.get<UsaintApiResponse<any>>(
+            `/api/usaint/grade-sync/status?studentId=${studentId}`,
+        );
         return response.data;
     } catch (error) {
         console.error('Error getting sync status:', error);

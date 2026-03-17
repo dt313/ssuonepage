@@ -32,13 +32,15 @@ export function AppHeader({
             {showAuth && (
                 <>
                     {isHydrated && isAuthenticated ? (
-                        <button
-                            onClick={() => logout()}
-                            className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-white dark:bg-zinc-950 transition-colors hover:bg-accent"
-                            aria-label="Logout"
-                        >
-                            <LogOut className="h-4 w-4" />
-                        </button>
+                        <>
+                            <button
+                                onClick={() => logout()}
+                                className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-white dark:bg-zinc-950 transition-colors hover:bg-accent"
+                                aria-label="Logout"
+                            >
+                                <LogOut className="h-4 w-4" />
+                            </button>
+                        </>
                     ) : (
                         <LoginButton />
                     )}
@@ -57,6 +59,7 @@ export function AppLayout({
     showAuth = true,
     showThemeToggle = true,
     showBackgroundSelector = false,
+    headerRight,
 }: {
     children: React.ReactNode;
     title?: string;
@@ -65,6 +68,7 @@ export function AppLayout({
     showAuth?: boolean;
     showThemeToggle?: boolean;
     showBackgroundSelector?: boolean;
+    headerRight?: React.ReactNode;
 }) {
     const { bgType } = useUIStore();
 
@@ -89,13 +93,16 @@ export function AppLayout({
             <div className="relative z-10 flex flex-col items-center gap-8 p-4 pt-12 pb-24">
                 <div className="w-full max-w-[1400px] flex flex-col gap-8">
                     {!hideHeader && (
-                        <header className="flex flex-col gap-2">
-                            <Link href="/" className="w-fit">
-                                <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 hover:opacity-80 transition-opacity">
-                                    {title}
-                                </h1>
-                            </Link>
-                            {subtitle && <p className="text-zinc-500 dark:text-zinc-400">{subtitle}</p>}
+                        <header className="flex items-center justify-between gap-4">
+                            <div className="flex flex-col gap-2">
+                                <Link href="/" className="w-fit">
+                                    <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 hover:opacity-80 transition-opacity">
+                                        {title}
+                                    </h1>
+                                </Link>
+                                {subtitle && <p className="text-zinc-500 dark:text-zinc-400">{subtitle}</p>}
+                            </div>
+                            {headerRight && <div>{headerRight}</div>}
                         </header>
                     )}
                     <main className="w-full">{children}</main>

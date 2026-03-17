@@ -1,14 +1,34 @@
 import { SapWdaClient } from 'usaint-lib';
 
 /**
- * Retrieves the trimmed value or text of a SAP control by its ID.
- * Falls back to an empty string if the control is not found or an error occurs.
+ * Finds the index of a column by its header name.
+ * Handles both string headers and object headers with a 'text' property.
+ * Prioritizes exact matches to avoid confusion with overlapping names.
  */
+export const getIndexByHeader = (headers: any[], name: string) => {
+    // Try exact match first
+    const exactIdx = headers.findIndex((h: any) => {
+        const text = (typeof h === 'string' ? h : h?.text || '').trim();
+        return text === name;
+    });
+    if (exactIdx !== -1) return exactIdx;
+
+    // Fallback to substring match
+    return headers.findIndex((h: any) => {
+        const text = (typeof h === 'string' ? h : h?.text || '').trim();
+        return text?.includes(name);
+    });
+};
+
+/**
+ * Retrieves the trimmed value or text of a SAP control by its ID.
+ */
+
 export const getControlValue = (wda: SapWdaClient, id: string): string => {
     try {
         const control = wda.getControlById<any>(id);
         if (!control) return '';
-        
+
         // Try value first (for SapInput), then text (for SapTextView/SapLabel)
         const val = control.value || control.text || '';
         return val.trim();

@@ -4,7 +4,7 @@ import { SapButton, SapTable, SapWdaClient } from 'usaint-lib';
 
 import { withErrorHandling } from '@/utils/api-handler';
 import { getSession } from '@/utils/session';
-import { getControlValue } from '@/utils/usaint-parser';
+import { getControlValue, getIndexByHeader } from '@/utils/usaint-parser';
 
 const CONTROL_IDS = {
     GRAD_CREDITS: 'ZCMW8015.ID_0001:MAIN.TC01_GR_CPOP',
@@ -65,30 +65,42 @@ export const POST = withErrorHandling(async (request: Request) => {
 
     if (table) {
         const tableData = await table.getAllRows();
+        const headers = tableData.headers || [];
+
+        const domainIdx = getIndexByHeader(headers, '이수구분');
+        const calculatedValueIdx = getIndexByHeader(headers, '계산값');
+        const resultIdx = getIndexByHeader(headers, '결과');
+        const referenceValueIdx = getIndexByHeader(headers, '기준값');
+        const differenceIdx = getIndexByHeader(headers, '계산값 - 기준값');
+        const requirementIdx = getIndexByHeader(headers, '졸업요건');
+        const subjectsIdx = getIndexByHeader(headers, '과목사용');
+
         let currentDomain = '';
 
         categories = tableData.rows.map((row) => {
+            const hasDomain = row.cells.length === headers.length;
+
             let domain, requirement, referenceValue, calculatedValue, difference, result, subjects;
 
-            if (row.cells.length === 7) {
-                // Row includes the Domain column
-                domain = (row.cells[0]?.text || '').trim();
+            if (hasDomain) {
+                domain = (row.cells[domainIdx]?.text || '').trim();
                 currentDomain = domain;
-                requirement = (row.cells[1]?.text || '').trim();
-                referenceValue = (row.cells[2]?.text || '').trim();
-                calculatedValue = (row.cells[3]?.text || '').trim();
-                difference = (row.cells[4]?.text || '').trim();
-                result = (row.cells[5]?.text || '').trim();
-                subjects = (row.cells[6]?.text || '').trim();
+                requirement = (row.cells[requirementIdx]?.text || '').trim();
+                referenceValue = (row.cells[referenceValueIdx]?.text || '').trim();
+                calculatedValue = (row.cells[calculatedValueIdx]?.text || '').trim();
+                difference = (row.cells[differenceIdx]?.text || '').trim();
+                result = (row.cells[resultIdx]?.text || '').trim();
+                subjects = (row.cells[subjectsIdx]?.text || '').trim();
             } else {
                 // Row skips the Domain column due to rowspan
                 domain = currentDomain;
-                requirement = (row.cells[0]?.text || '').trim();
-                referenceValue = (row.cells[1]?.text || '').trim();
-                calculatedValue = (row.cells[2]?.text || '').trim();
-                difference = (row.cells[3]?.text || '').trim();
-                result = (row.cells[4]?.text || '').trim();
-                subjects = (row.cells[5]?.text || '').trim();
+                // Shift indices left by 1 because domain is missing
+                requirement = (row.cells[requirementIdx - 1]?.text || '').trim();
+                referenceValue = (row.cells[referenceValueIdx - 1]?.text || '').trim();
+                calculatedValue = (row.cells[calculatedValueIdx - 1]?.text || '').trim();
+                difference = (row.cells[differenceIdx - 1]?.text || '').trim();
+                result = (row.cells[resultIdx - 1]?.text || '').trim();
+                subjects = (row.cells[subjectsIdx - 1]?.text || '').trim();
             }
 
             return {
