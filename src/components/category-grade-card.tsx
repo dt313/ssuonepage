@@ -1,11 +1,13 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 
-import { CategoryGradeInfo } from '@/types/api';
+import { CategoryGradeInfo, GradeSubject } from '@/types/api';
 import { ArrowDown, ArrowUp, ChevronDown, ClipboardCheck, Filter, Search, X } from 'lucide-react';
 
 import { cn } from '@/utils';
+
+import { SubjectsByGradeModal } from './subjects-by-grade-modal';
 
 interface CategoryGradeCardProps {
     data: CategoryGradeInfo;
@@ -78,7 +80,13 @@ function FilterSelect({
     );
 }
 
-function StatsBar({ stats }: { stats: { totalCredits: number; count: number; gradeCounts: Record<string, number> } }) {
+function StatsBar({
+    stats,
+    onGradeClick,
+}: {
+    stats: { totalCredits: number; count: number; gradeCounts: Record<string, number> };
+    onGradeClick: (grade: string) => void;
+}) {
     return (
         <div className="flex items-center flex-wrap gap-6">
             <div className="flex items-center gap-2">
@@ -109,12 +117,16 @@ function StatsBar({ stats }: { stats: { totalCredits: number; count: number; gra
                                     GRADE_ORDER.indexOf(b as (typeof GRADE_ORDER)[number]),
                             )
                             .map(([grade, count]) => (
-                                <span
+                                <button
                                     key={grade}
-                                    className={cn('text-xs font-black px-1.5 py-0.5 rounded', getGradeColor(grade))}
+                                    onClick={() => onGradeClick(grade)}
+                                    className={cn(
+                                        'text-xs font-black px-1.5 py-0.5 rounded transition-transform hover:scale-105',
+                                        getGradeColor(grade),
+                                    )}
                                 >
                                     {grade}: {count}
-                                </span>
+                                </button>
                             ))}
                     </div>
                 </div>
@@ -144,27 +156,23 @@ function GradeCell({ grade }: { grade: string }) {
 }
 
 export function CategoryGradeCard({ data, className }: CategoryGradeCardProps) {
-    const semesters = useMemo(() => {
-        return ['All Semesters', ...Object.keys(data.bySemester).sort((a, b) => b.localeCompare(a))];
-    }, [data.bySemester]);
+    const semesters = ['All Semesters', ...Object.keys(data.bySemester).sort((a, b) => b.localeCompare(a))];
 
-    const categories = useMemo(() => {
-        const uniqueCategories = new Set(data.subjects.map((s) => s.category || 'Un-updated'));
-        return [
-            'All Categories',
-            ...Array.from(uniqueCategories).sort((a, b) => {
-                if (a === 'Un-updated') return 1;
-                if (b === 'Un-updated') return -1;
-                return a.localeCompare(b);
-            }),
-        ];
-    }, [data.subjects]);
+    const categories = [
+        'All Categories',
+        ...Array.from(new Set(data.subjects.map((s) => s.category || 'Un-updated'))).sort((a, b) => {
+            if (a === 'Un-updated') return 1;
+            if (b === 'Un-updated') return -1;
+            return a.localeCompare(b);
+        }),
+    ];
 
     const [selectedSemester, setSelectedSemester] = useState('All Semesters');
     const [selectedCategory, setSelectedCategory] = useState('All Categories');
     const [searchQuery, setSearchQuery] = useState('');
     const [sortField, setSortField] = useState<'semester' | 'name' | 'grade'>('semester');
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+    const [subjectsForGrade, setSubjectsForGrade] = useState<{ grade: string; subjects: GradeSubject[] } | null>(null);
 
     const handleSort = (field: 'semester' | 'name' | 'grade') => {
         if (sortField === field) {
@@ -175,49 +183,50 @@ export function CategoryGradeCard({ data, className }: CategoryGradeCardProps) {
         }
     };
 
-    const filteredSubjects = useMemo(() => {
-        return data.subjects
-            .filter((subject) => {
-                const semesterKey = `${subject.yearSemester.year}-${subject.yearSemester.semester}`;
-                const matchesSemester = selectedSemester === 'All Semesters' || semesterKey === selectedSemester;
-                const displayCategory = subject.category || 'Un-updated';
-                const matchesCategory = selectedCategory === 'All Categories' || displayCategory === selectedCategory;
-                const matchesSearch =
-                    searchQuery === '' ||
-                    subject.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                    subject.code.toLowerCase().includes(searchQuery.toLowerCase());
-                return matchesSemester && matchesCategory && matchesSearch;
-            })
-            .sort((a, b) => {
-                if (sortField === 'grade') {
-                    const gradeA = a.grade || 'N/A';
-                    const gradeB = b.grade || 'N/A';
-                    const idxA = GRADE_ORDER.indexOf(gradeA as (typeof GRADE_ORDER)[number]);
-                    const idxB = GRADE_ORDER.indexOf(gradeB as (typeof GRADE_ORDER)[number]);
-                    return sortDirection === 'asc' ? idxA - idxB : idxB - idxA;
-                }
-                if (sortField === 'name') {
-                    return sortDirection === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
-                }
-                const semA = `${a.yearSemester.year}-${a.yearSemester.semester}`;
-                const semB = `${b.yearSemester.year}-${b.yearSemester.semester}`;
-                if (semA !== semB) return sortDirection === 'asc' ? semA.localeCompare(semB) : semB.localeCompare(semA);
-                return a.name.localeCompare(b.name);
-            });
-    }, [data.subjects, selectedSemester, selectedCategory, searchQuery, sortField, sortDirection]);
+    const handleGradeClick = (grade: string) => {
+        const subjectsWithGrade = filteredSubjects.filter((s) => (s.grade || 'N/A') === grade);
+        setSubjectsForGrade({ grade, subjects: subjectsWithGrade });
+    };
 
-    const stats = useMemo(() => {
-        const totalCredits = filteredSubjects.reduce((acc, sub) => acc + sub.credit, 0);
-        const gradeCounts = filteredSubjects.reduce(
-            (acc, sub) => {
-                const grade = sub.grade || 'N/A';
-                acc[grade] = (acc[grade] || 0) + 1;
-                return acc;
-            },
-            {} as Record<string, number>,
-        );
-        return { totalCredits, count: filteredSubjects.length, gradeCounts };
-    }, [filteredSubjects]);
+    const filteredSubjects = data.subjects
+        .filter((subject) => {
+            const semesterKey = `${subject.yearSemester.year}-${subject.yearSemester.semester}`;
+            const matchesSemester = selectedSemester === 'All Semesters' || semesterKey === selectedSemester;
+            const displayCategory = subject.category || 'Un-updated';
+            const matchesCategory = selectedCategory === 'All Categories' || displayCategory === selectedCategory;
+            const matchesSearch =
+                searchQuery === '' ||
+                subject.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                subject.code.toLowerCase().includes(searchQuery.toLowerCase());
+            return matchesSemester && matchesCategory && matchesSearch;
+        })
+        .sort((a, b) => {
+            if (sortField === 'grade') {
+                const gradeA = a.grade || 'N/A';
+                const gradeB = b.grade || 'N/A';
+                const idxA = GRADE_ORDER.indexOf(gradeA as (typeof GRADE_ORDER)[number]);
+                const idxB = GRADE_ORDER.indexOf(gradeB as (typeof GRADE_ORDER)[number]);
+                return sortDirection === 'asc' ? idxA - idxB : idxB - idxA;
+            }
+            if (sortField === 'name') {
+                return sortDirection === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
+            }
+            const semA = `${a.yearSemester.year}-${a.yearSemester.semester}`;
+            const semB = `${b.yearSemester.year}-${b.yearSemester.semester}`;
+            if (semA !== semB) return sortDirection === 'asc' ? semA.localeCompare(semB) : semB.localeCompare(semA);
+            return a.name.localeCompare(b.name);
+        });
+
+    const totalCredits = filteredSubjects.reduce((acc, sub) => acc + sub.credit, 0);
+    const gradeCounts = filteredSubjects.reduce(
+        (acc, sub) => {
+            const grade = sub.grade || 'N/A';
+            acc[grade] = (acc[grade] || 0) + 1;
+            return acc;
+        },
+        {} as Record<string, number>,
+    );
+    const stats = { totalCredits, count: filteredSubjects.length, gradeCounts };
 
     const isFiltered =
         selectedSemester !== 'All Semesters' || selectedCategory !== 'All Categories' || searchQuery !== '';
@@ -302,7 +311,7 @@ export function CategoryGradeCard({ data, className }: CategoryGradeCardProps) {
                     </div>
                 </div>
                 <div className="flex items-center justify-between px-1">
-                    <StatsBar stats={stats} />
+                    <StatsBar stats={stats} onGradeClick={handleGradeClick} />
                 </div>
             </div>
 
@@ -403,6 +412,15 @@ export function CategoryGradeCard({ data, className }: CategoryGradeCardProps) {
                     </div>
                 )}
             </div>
+
+            {subjectsForGrade && (
+                <SubjectsByGradeModal
+                    open={!!subjectsForGrade}
+                    onOpenChange={() => setSubjectsForGrade(null)}
+                    grade={subjectsForGrade.grade}
+                    subjects={subjectsForGrade.subjects}
+                />
+            )}
         </div>
     );
 }

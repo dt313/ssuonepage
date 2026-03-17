@@ -200,7 +200,7 @@ export default function Main() {
 
     return (
         <div>
-            <header className="flex items-center justify-between gap-4 mb-6">
+            <header className="flex items-center flex-wrap justify-between gap-4 mb-6">
                 <div className="flex flex-col gap-2">
                     <Link href="/" className="w-fit">
                         <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 hover:opacity-80 transition-opacity">
@@ -227,7 +227,7 @@ export default function Main() {
                     >
                         <Camera className={cn('h-4 w-4', isCapturing && 'animate-spin')} />
                     </button>
-                    <div className="relative">
+                    {/* <div className="relative">
                         <button
                             onClick={() => setShowSettings(!showSettings)}
                             className="flex h-10 items-center justify-center rounded-xl border border-border bg-white dark:bg-zinc-950 px-3 text-sm font-black text-zinc-900 dark:text-zinc-50 transition-all hover:bg-accent"
@@ -246,7 +246,7 @@ export default function Main() {
                                 <p className="mt-1 text-xs text-zinc-400">Liquid glass effect for cards</p>
                             </div>
                         )}
-                    </div>
+                    </div> */}
                 </div>
             </header>
 

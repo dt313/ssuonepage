@@ -5,14 +5,14 @@ import * as Dialog from '@radix-ui/react-dialog';
 type DialogWrapperProps = {
     open?: boolean;
     onOpenChange?: (open: boolean) => void;
-    trigger: ReactNode;
+    trigger?: ReactNode;
     children: ReactNode;
 };
 
 const DialogWrapper = ({ open, onOpenChange, trigger, children }: DialogWrapperProps) => {
     return (
         <Dialog.Root open={open} onOpenChange={onOpenChange}>
-            <Dialog.Trigger asChild>{trigger}</Dialog.Trigger>
+            {trigger && <Dialog.Trigger asChild>{trigger}</Dialog.Trigger>}
 
             <Dialog.Portal>
                 <Dialog.Overlay className="fixed inset-0 z-[200] bg-black/50 data-[state=open]:animate-fade-in data-[state=closed]:animate-fade-out" />

@@ -25,8 +25,6 @@ export const POST = withErrorHandling(async (request: Request) => {
         // Store the sensitive cookies in Redis and get a non-sensitive UUID
         const appSessionId = await createSession(sessionString);
 
-        console.log(`Login success for ${studentId}. Created appSessionId: ${appSessionId}`);
-
         return NextResponse.json<UsaintLoginResponse>({
             message: 'Login successful',
             appSessionId: appSessionId,
