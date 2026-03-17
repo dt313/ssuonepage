@@ -204,7 +204,7 @@ export default function Main() {
                 <div className="flex flex-col gap-2">
                     <Link href="/" className="w-fit">
                         <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 hover:opacity-80 transition-opacity">
-                            SSU Dashboard
+                            SSU Information in one page
                         </h1>
                     </Link>
                     <p className="text-zinc-500 dark:text-zinc-400"> Manage your academic information in one place.</p>
