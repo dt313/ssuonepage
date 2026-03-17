@@ -31,7 +31,7 @@ export const metadata = {
         type: 'website',
         images: [
             {
-                url: '/images/og-image.png',
+                url: 'https://raw.githubusercontent.com/dt313/ssu-dashboard/refs/heads/main/public/images/og-image.png?token=GHSAT0AAAAAADE666TN24NKVYWVEZEMDCTI2NZFN6A',
                 width: 1200,
                 height: 630,
                 alt: 'SSU Dashboard',
