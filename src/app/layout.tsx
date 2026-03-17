@@ -1,4 +1,3 @@
-import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 
 import { ThemeProvider } from '@/components/providers/theme-provider';
@@ -7,7 +6,10 @@ import ToastProvider from '@/components/providers/toast-provider';
 import { AppLayout } from './app-layout';
 import './styles/globals.css';
 
+const url = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 export const metadata = {
+    metadataBase: url,
+
     title: 'SSU Dashboard - Student Academic Information',
     description:
         'Manage your Soongsil Software University academic information in one page. View grades, tuition, timetable, chapel attendance, scholarship, and graduation audit.',
@@ -35,7 +37,7 @@ export const metadata = {
         type: 'website',
         images: [
             {
-                url: 'https://raw.githubusercontent.com/dt313/ssu-dashboard/refs/heads/main/public/images/og-image.png?token=GHSAT0AAAAAADE666TN24NKVYWVEZEMDCTI2NZFN6A',
+                url: '/images/og-image.png',
                 width: 1200,
                 height: 630,
                 alt: 'SSU Dashboard',

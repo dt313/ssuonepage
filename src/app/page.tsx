@@ -1,9 +1,8 @@
 import Main from './main';
 
-const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-
+const url = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 export const metadata = {
-    metadataBase: new URL(appUrl),
+    metadataBase: url,
     title: 'SSU Dashboard - Student Academic Information',
     description:
         'Manage your Soongsil Software University academic information in one page. View grades, tuition, timetable, chapel attendance, scholarship, and graduation audit.',
