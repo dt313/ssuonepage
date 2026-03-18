@@ -329,7 +329,7 @@ export function CategoryGradeCard({ data, className }: CategoryGradeCardProps) {
                                     <SortIcon field="semester" currentField={sortField} direction={sortDirection} />
                                 </div>
                             </th>
-                            <th className="py-4 px-2 text-center">Category</th>
+                            <th className="py-4 px-2 text-center">구분</th>
                             <th className="py-4 px-2 text-center">과목학점</th>
                             <th
                                 className="py-4 pr-6 pl-2 text-right cursor-pointer select-none hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
