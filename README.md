@@ -1,6 +1,6 @@
-# SSU-Dashboard
+# SSU-OnePage
 
-SSU-Dashboard is a modern, responsive dashboard for Soongsil University students to effortlessly track their academic progress. Built with Next.js, it provides a user-friendly interface to view grades, scholarships, tuition, and more, by leveraging the u-Saint portal data.
+SSU-OnePage is a modern, responsive dashboard for Soongsil University students to effortlessly track their academic progress. Built with Next.js, it provides a user-friendly interface to view grades, scholarships, tuition, and more, by leveraging the u-Saint portal data.
 
 ## ✨ Features
 
