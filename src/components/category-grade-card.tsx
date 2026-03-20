@@ -180,11 +180,6 @@ export function CategoryGradeCard({ data, className }: CategoryGradeCardProps) {
         }
     };
 
-    const handleGradeClick = (grade: string) => {
-        const subjectsWithGrade = data.subjects.filter((s) => (s.grade || 'N/A') === grade);
-        setSubjectsForGrade({ grade, subjects: subjectsWithGrade });
-    };
-
     const handleSubjectDetailClick = (subjectCode: string) => {
         const detail = subjectGradeDetail?.find((item) => item.data[0]?.[1] === subjectCode);
         if (detail) {
@@ -222,6 +217,11 @@ export function CategoryGradeCard({ data, className }: CategoryGradeCardProps) {
                 return a.name.localeCompare(b.name);
             });
     }, [data.subjects, selectedSemester, selectedCategory, searchQuery, sortField, sortDirection]);
+
+    const handleGradeClick = (grade: string) => {
+        const subjectsWithGrade = filteredSubjects.filter((s) => (s.grade || 'N/A') === grade);
+        setSubjectsForGrade({ grade, subjects: subjectsWithGrade });
+    };
 
     const stats = useMemo(() => {
         const totalCredits = filteredSubjects.reduce((acc, sub) => acc + sub.credit, 0);
