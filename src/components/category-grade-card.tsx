@@ -386,12 +386,17 @@ export function CategoryGradeCard({ data, className }: CategoryGradeCardProps) {
                                                 </div>
                                             </div>
                                             {hasDetail && (
-                                                <button
-                                                    onClick={() => handleSubjectDetailClick(subject.code)}
-                                                    className="p-1.5 rounded-lg hover:bg-white dark:hover:bg-zinc-800 text-zinc-400 hover:text-primary dark:hover:text-primary shadow-sm border border-zinc-200 dark:border-zinc-700 cursor-pointer transition-all"
-                                                >
-                                                    <FileText className="h-3.5 w-3.5" />
-                                                </button>
+                                                <div className="relative group/tooltip">
+                                                    <button
+                                                        onClick={() => handleSubjectDetailClick(subject.code)}
+                                                        className="p-1.5 rounded-lg hover:bg-white dark:hover:bg-zinc-800 text-zinc-400 hover:text-primary dark:hover:text-primary shadow-sm border border-zinc-200 dark:border-zinc-700 cursor-pointer transition-all"
+                                                    >
+                                                        <FileText className="h-3.5 w-3.5" />
+                                                    </button>
+                                                    <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-[10px] font-bold text-white bg-zinc-900 dark:bg-zinc-700 rounded-md opacity-0 group-hover/tooltip:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
+                                                        View Details
+                                                    </span>
+                                                </div>
                                             )}
                                         </div>
                                     </td>

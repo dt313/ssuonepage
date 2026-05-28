@@ -1,12 +1,22 @@
 import { ApiErrorResponse, UsaintApiRequest, UsaintApiResponse } from '@/types/api';
 import { NextResponse } from 'next/server';
-import { SapTable, SapTableCellData, SapWdaClient } from 'usaint-lib';
+import { SapButton, SapComboBox, SapTable, SapTableCellData, SapWdaClient } from 'usaint-lib';
 
 import { withErrorHandling } from '@/utils/api-handler';
 import { getSession } from '@/utils/session';
 import { getIndexByHeader } from '@/utils/usaint-parser';
 
 type Header = string | { text: string };
+
+const CONTROL_IDS = {
+    YEAR_SELECT: 'ZCMW_PERIOD_RE.ID_D8FB9BECD84FD622F5EAED9E0BE35D27:VIW_MAIN.PERYR',
+    SEMESTER_SELECT: 'ZCMW_PERIOD_RE.ID_D8FB9BECD84FD622F5EAED9E0BE35D27:VIW_MAIN.PERID',
+    PREV_SEMESTER_BUTTON: 'ZCMW_PERIOD_RE.ID_D8FB9BECD84FD622F5EAED9E0BE35D27:VIW_MAIN.BUTTON_PREV',
+    NEXT_SEMESTER_BUTTON: 'ZCMW_PERIOD_RE.ID_D8FB9BECD84FD622F5EAED9E0BE35D27:VIW_MAIN.BUTTON_NEXT',
+} as const;
+
+const SUMMER_SEMESTER_CODE = '091';
+const WINTER_SEMESTER_CODE = '093';
 
 export const POST = withErrorHandling(async (request: Request) => {
     const { appSessionId }: UsaintApiRequest = await request.json();
@@ -30,6 +40,8 @@ export const POST = withErrorHandling(async (request: Request) => {
 
     const initResult = await wda.initialize();
 
+    // await writeFile('./debug-timetable.html', wda.$.html(), 'utf-8');
+
     if (!initResult.isSuccess) {
         return NextResponse.json<ApiErrorResponse>(
             {
@@ -38,6 +50,17 @@ export const POST = withErrorHandling(async (request: Request) => {
             },
             { status: 401 },
         );
+    }
+
+    const semesterSelector = wda.getControlById<SapComboBox>(CONTROL_IDS.SEMESTER_SELECT);
+    let currentSemester = '';
+    if (semesterSelector) {
+        currentSemester = semesterSelector.selectedKey;
+
+        if (currentSemester === SUMMER_SEMESTER_CODE || currentSemester === WINTER_SEMESTER_CODE) {
+            const prevButton = wda.getControlById<SapButton>(CONTROL_IDS.PREV_SEMESTER_BUTTON);
+            if (prevButton) await prevButton?.press();
+        }
     }
 
     // 3️⃣ Get the timetable table

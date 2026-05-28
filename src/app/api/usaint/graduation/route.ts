@@ -76,7 +76,6 @@ export const POST = withErrorHandling(async (request: Request) => {
         const subjectsIdx = getIndexByHeader(headers, '과목사용');
 
         let currentDomain = '';
-
         categories = tableData.rows.map((row) => {
             const hasDomain = row.cells.length === headers.length;
 
