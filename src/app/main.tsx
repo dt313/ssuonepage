@@ -122,7 +122,7 @@ export default function Main() {
                     usaintService.callGraduationApi({ appSessionId }),
                     usaintService.callCategoryGrade({ appSessionId }),
                     usaintService.callSemesterGradeApi({ appSessionId }),
-                    usaintService.callSemesterGradeOldVersionApi({ appSessionId }),
+                    // usaintService.callSemesterGradeOldVersionApi({ appSessionId }),
                     usaintService.callChapelApi({ appSessionId }),
                     usaintService.callScholarshipApi({ appSessionId }),
                 ];
@@ -134,7 +134,7 @@ export default function Main() {
                     'Graduation Audit',
                     'Category Grade',
                     'Semester Grade',
-                    'Semester Grade (Old)',
+                    // 'Semester Grade (Old)',
                     'Chapel Attendance',
                     'Scholarship',
                 ];
